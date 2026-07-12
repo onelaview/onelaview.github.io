@@ -422,10 +422,11 @@
     const pluralSent = `They're ${color.name} ${plural(obj.word)}.`;
     const answer = many ? pluralSent : singular;
 
-    const repeat = () => speak(answer);
+    const ask = many ? "How many are they?" : "What is it?";
+    const repeat = () => speak(ask);
     const scr = screenFrame("One or Many?", repeat);
     const prompt = document.createElement("div"); prompt.className = "prompt";
-    prompt.innerHTML = many ? `Say it about <b>many</b>` : `Say it about <b>one</b>`;
+    prompt.innerHTML = `<span class="spk">🔊</span> ` + (many ? `Say it about <b>many</b>` : `Say it about <b>one</b>`);
     scr.appendChild(prompt);
     const stage = document.createElement("div"); stage.className = "stage";
     const scene = document.createElement("div"); scene.className = "scene";
