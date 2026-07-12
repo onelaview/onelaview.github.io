@@ -36,6 +36,19 @@
     .screen { flex: 1; display: flex; flex-direction: column; min-height: 0; }
     .title { color: #fff; text-align: center; font-size: clamp(20px, 6vw, 30px); font-weight: 800;
       text-shadow: 0 3px 0 rgba(0,0,0,.15); margin: 4px 0 8px; }
+    .progress { align-self: center; background: rgba(255,255,255,.85); color: #6a4cff; font-weight: 800;
+      font-size: 14px; border-radius: 999px; padding: 4px 14px; margin: 0 auto 8px;
+      box-shadow: 0 3px 0 rgba(0,0,0,.1); }
+    .finish { flex: 1; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 14px; text-align: center; }
+    .finish .fbig { font-size: 96px; line-height: 1; }
+    .finish .ftitle { color: #fff; font-size: clamp(28px, 8vw, 40px); font-weight: 900; text-shadow: 0 3px 0 rgba(0,0,0,.15); }
+    .finish .fsub { color: #fff; font-size: clamp(16px, 4.4vw, 20px); font-weight: 700; opacity: .95; }
+    .fbtns { display: flex; flex-direction: column; gap: 12px; margin-top: 10px; width: min(80%, 320px); }
+    .fbtn { border: none; background: #ffd23f; color: #2b2140; font-family: inherit; font-weight: 900;
+      font-size: 22px; padding: 16px 20px; border-radius: 24px; box-shadow: 0 6px 0 #c99a00; cursor: pointer; }
+    .fbtn:active { transform: translateY(4px); box-shadow: 0 2px 0 #c99a00; }
+    .fbtn.alt { background: #fff; box-shadow: 0 6px 0 rgba(0,0,0,.18); }
+    .fbtn.alt:active { box-shadow: 0 2px 0 rgba(0,0,0,.18); }
     .prompt { background: #fff; border-radius: 22px; padding: 14px 16px; text-align: center;
       font-size: clamp(20px, 6vw, 28px); font-weight: 800; box-shadow: 0 6px 0 rgba(0,0,0,.12);
       display: flex; align-items: center; justify-content: center; gap: 10px; }
@@ -181,6 +194,17 @@
 
   let stars = +(localStorage.getItem("ccq_stars") || 0);
 
+  const ROUNDS = 10;          // questions per mini game before the finish screen
+  let roundNum = 0;           // 0-based index of the current question
+  let quizMode = false;       // true while inside a counted mini game
+  let currentStart = null;    // start() of the active mini game (for "Play again")
+  function launch(fn) { currentStart = fn; roundNum = 0; quizMode = true; fn(); }
+  function advance(fn, ms) {
+    roundNum++;
+    if (roundNum >= ROUNDS) setTimeout(finish, ms || 1400);
+    else setTimeout(fn, ms || 1400);
+  }
+
   function speak(text) {
     try {
       if (!("speechSynthesis" in window)) return;
@@ -218,6 +242,11 @@
       const t = document.createElement("div"); t.className = "title"; t.textContent = titleText;
       scr.appendChild(t);
     }
+    if (quizMode) {
+      const p = document.createElement("div"); p.className = "progress";
+      p.textContent = `${Math.min(roundNum + 1, ROUNDS)} / ${ROUNDS}`;
+      scr.appendChild(p);
+    }
     app.appendChild(scr);
     return scr;
   }
@@ -249,6 +278,27 @@
   }
   function nextSoon(fn, ms) { setTimeout(fn, ms || 1400); }
 
+  function finish() {
+    quizMode = false;
+    if (window.speechSynthesis) speechSynthesis.cancel();
+    app.innerHTML = "";
+    app.appendChild(topBar(null));
+    app.querySelector("#homeBtn").style.visibility = "hidden";
+    const scr = document.createElement("div"); scr.className = "screen";
+    const box = document.createElement("div"); box.className = "finish";
+    box.innerHTML = `<div class="fbig">🏆</div>
+      <div class="ftitle">Great job!</div>
+      <div class="fsub">You finished all ${ROUNDS} questions!</div>`;
+    const btns = document.createElement("div"); btns.className = "fbtns";
+    const again = document.createElement("button"); again.className = "fbtn";
+    again.textContent = "▶ Play again"; again.onclick = () => launch(currentStart);
+    const home = document.createElement("button"); home.className = "fbtn alt";
+    home.textContent = "🏠 Home"; home.onclick = () => menu();
+    btns.append(again, home); box.appendChild(btns);
+    scr.appendChild(box); app.appendChild(scr);
+    burst("🏆"); speak("Great job! You finished.");
+  }
+
   /* ============================ MENU ============================ */
   const MODES = [
     { id:"listen",  big:"👂", lbl:"Listen & Tap",  sub:"Hear it, tap it" },
@@ -259,6 +309,7 @@
     { id:"age",     big:"🎂", lbl:"How old?",       sub:"I'm seven" },
   ];
   function menu() {
+    quizMode = false;
     speechSynthesis && speechSynthesis.cancel();
     app.innerHTML = "";
     app.appendChild(topBar(null));
@@ -270,7 +321,7 @@
     MODES.forEach(m => {
       const c = document.createElement("div"); c.className = "card";
       c.innerHTML = `<div class="big">${m.big}</div><div class="lbl">${m.lbl}</div><div class="sub">${m.sub}</div>`;
-      c.onclick = () => START[m.id]();
+      c.onclick = () => { if (m.id === "age") { quizMode = false; startAge(); } else launch(START[m.id]); };
       grid.appendChild(c);
     });
     scr.appendChild(grid);
@@ -311,7 +362,7 @@
       const b = document.createElement("button"); b.className = "choice"; b.innerHTML = html;
       b.onclick = () => {
         if (i === correctIdx) { b.classList.add("good"); [...box.children].forEach(c=>c.disabled=true);
-          addStar(); burst("🌟"); speak(cap(say) + "!"); nextSoon(startListen); }
+          addStar(); burst("🌟"); speak(cap(say) + "!"); advance(startListen); }
         else { b.classList.add("bad","shake"); setTimeout(()=>b.classList.remove("bad","shake"),400); speak("Try again"); }
       };
       box.appendChild(b);
@@ -355,7 +406,7 @@
     const stage = document.createElement("div"); stage.className = "stage";
     stage.innerHTML = iconSVG(obj.icon, hex, "icon");
     scr.appendChild(stage);
-    choiceButtons(scr, choices, correctIdx, {}, (ok, b) => { speak(answer); nextSoon(startWhats); });
+    choiceButtons(scr, choices, correctIdx, {}, (ok, b) => { speak(answer); advance(startWhats); });
     setTimeout(repeat, 350);
   }
 
@@ -384,7 +435,7 @@
       ? [pluralSent, singular]
       : [singular, pluralSent];
     const order = shuffle(choices);
-    choiceButtons(scr, order.map(cap2), order.indexOf(answer), {}, (ok,b)=>{ speak(answer); nextSoon(startCount); });
+    choiceButtons(scr, order.map(cap2), order.indexOf(answer), {}, (ok,b)=>{ speak(answer); advance(startCount); });
     setTimeout(repeat, 350);
   }
   function cap2(s){ return s; }
@@ -416,7 +467,7 @@
     const order = shuffle([yes, no]);
     const items = order.map(s => (s.startsWith("Yes") ? "✅ " : "❌ ") + s);
     choiceButtons(scr, items, order.indexOf(answer), {big:true}, (ok,b)=>{
-      speak(answer + " It's " + (many? realColor.name : realColor.name) + "."); nextSoon(startYesNo);
+      speak(answer + " It's " + (many? realColor.name : realColor.name) + "."); advance(startYesNo);
     });
     setTimeout(repeat, 350);
   }
@@ -455,7 +506,7 @@
           b.classList.add("used"); pos++;
           if (pos === letters.length) {
             addStar(); burst("🎉"); speak(cap(word) + "! Well done!");
-            nextSoon(startSpell, 1800);
+            advance(startSpell, 1800);
           }
         } else {
           b.classList.add("shake"); setTimeout(()=>b.classList.remove("shake"),400); speak("Try again");
