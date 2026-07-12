@@ -138,7 +138,8 @@
     { name:"white",  hex:"#ffffff" },
     { name:"gray",   hex:"#9e9e9e" },
   ];
-  const NUMWORDS = ["zero","one","two","three","four","five","six","seven","eight","nine","ten"];
+  const NUMWORDS = ["zero","one","two","three","four","five","six","seven","eight","nine","ten",
+    "eleven","twelve","thirteen","fourteen","fifteen","sixteen","seventeen","eighteen","nineteen","twenty"];
   const OBJECTS = [
     { word:"pen",      icon:"pen" },
     { word:"pencil",   icon:"pencil" },
@@ -340,7 +341,7 @@
       return;
     }
     if (kind === "number") {
-      const nums = sample([1,2,3,4,5,6,7,8,9,10], 4); const ans = pick(nums);
+      const nums = sample(Array.from({length:20}, (_,i)=>i+1), 4); const ans = pick(nums);
       answerText = NUMWORDS[ans];
       const items = nums.map(n => `<div class="numeral" style="font-size:64px;color:#2b2140;text-shadow:none">${n}</div>`);
       renderTapRound("Listen and tap!", answerText, items, nums.indexOf(ans), () => speak(answerText));
