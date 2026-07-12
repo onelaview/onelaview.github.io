@@ -59,6 +59,8 @@
     .icon { width: min(60vw, 260px); height: min(60vw, 260px); }
     .scene { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
     .scene .icon { width: min(34vw, 150px); height: min(34vw, 150px); }
+    .spell-stage { flex-direction: column; flex-wrap: nowrap; gap: 14px; }
+    .spell-stage .icon { width: min(32vw, 140px); height: min(32vw, 140px); }
     .swatch { width: min(46vw, 190px); height: min(46vw, 190px); border-radius: 30px;
       border: 5px solid #ffffff; box-shadow: 0 8px 0 rgba(0,0,0,.15); }
     .numeral { font-size: min(40vw, 190px); font-weight: 900; color: #fff; line-height: 1;
@@ -490,7 +492,7 @@
     const prompt = document.createElement("div"); prompt.className = "prompt";
     prompt.innerHTML = `<span class="spk">🔊</span> Spell the word`;
     scr.appendChild(prompt);
-    const stage = document.createElement("div"); stage.className = "stage"; stage.style.flexDirection="column"; stage.style.gap="14px";
+    const stage = document.createElement("div"); stage.className = "stage spell-stage";
     stage.innerHTML = iconSVG(obj.icon, color.hex, "icon");
     const slots = document.createElement("div"); slots.className = "word-slots";
     const slotEls = letters.map(() => { const s=document.createElement("div"); s.className="slot"; slots.appendChild(s); return s; });
