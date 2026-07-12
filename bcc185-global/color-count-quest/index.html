@@ -425,7 +425,7 @@
     const pluralSent = `They're ${color.name} ${plural(obj.word)}.`;
     const answer = many ? pluralSent : singular;
 
-    const ask = many ? "How many are they?" : "What is it?";
+    const ask = many ? "What are they?" : "What is it?";
     const repeat = () => speak(ask);
     const scr = screenFrame("One or Many?", repeat);
     const prompt = document.createElement("div"); prompt.className = "prompt";
