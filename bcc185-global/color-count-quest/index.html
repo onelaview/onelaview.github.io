@@ -281,7 +281,8 @@
   }
   function nextSoon(fn, ms) { setTimeout(fn, ms || 1400); }
 
-  function finish() {
+  function finish(opts) {
+    opts = opts || {};
     quizMode = false;
     if (window.speechSynthesis) speechSynthesis.cancel();
     app.innerHTML = "";
@@ -289,17 +290,17 @@
     app.querySelector("#homeBtn").style.visibility = "hidden";
     const scr = document.createElement("div"); scr.className = "screen";
     const box = document.createElement("div"); box.className = "finish";
-    box.innerHTML = `<div class="fbig">🏆</div>
-      <div class="ftitle">Great job!</div>
-      <div class="fsub">You finished all ${ROUNDS} questions!</div>`;
+    box.innerHTML = `<div class="fbig">${opts.emoji || "🏆"}</div>
+      <div class="ftitle">${opts.title || "Great job!"}</div>
+      <div class="fsub">${opts.sub || `You finished all ${ROUNDS} questions!`}</div>`;
     const btns = document.createElement("div"); btns.className = "fbtns";
     const again = document.createElement("button"); again.className = "fbtn";
-    again.textContent = "▶ Play again"; again.onclick = () => launch(currentStart);
+    again.textContent = "▶ Play again"; again.onclick = opts.replay || (() => launch(currentStart));
     const home = document.createElement("button"); home.className = "fbtn alt";
     home.textContent = "🏠 Home"; home.onclick = () => menu();
     btns.append(again, home); box.appendChild(btns);
     scr.appendChild(box); app.appendChild(scr);
-    burst("🏆"); speak("Great job! You finished.");
+    burst(opts.emoji || "🏆"); speak(opts.say || "Great job! You finished.");
   }
 
   /* ============================ MENU ============================ */
@@ -533,8 +534,13 @@
     grid.style.gridTemplateColumns = "repeat(3, 1fr)"; grid.style.flex="1"; grid.style.alignContent="center";
     for (let n=1; n<=10; n++) {
       const b = document.createElement("button"); b.className="choice big"; b.textContent = n;
-      b.onclick = () => { b.classList.add("good"); addStar(); burst("🎂");
-        speak("I'm " + NUMWORDS[n] + "."); };
+      b.onclick = () => {
+        b.classList.add("good");
+        [...grid.children].forEach(c => c.disabled = true);
+        addStar(); burst("🎂"); speak("I'm " + NUMWORDS[n] + ".");
+        setTimeout(() => finish({ emoji:"🎂", title:`You're ${NUMWORDS[n]}!`,
+          sub:`"I'm ${NUMWORDS[n]}."`, say:"I'm " + NUMWORDS[n] + ".", replay:startAge }), 1500);
+      };
       grid.appendChild(b);
     }
     scr.appendChild(grid);
