@@ -537,7 +537,7 @@
       b.onclick = () => {
         b.classList.add("good");
         [...grid.children].forEach(c => c.disabled = true);
-        addStar(); burst("🎂"); speak("I'm " + NUMWORDS[n] + ".");
+        burst("🎂"); speak("I'm " + NUMWORDS[n] + ".");
         setTimeout(() => finish({ emoji:"🎂", title:`You're ${NUMWORDS[n]}!`,
           sub:`"I'm ${NUMWORDS[n]}."`, say:"I'm " + NUMWORDS[n] + ".", replay:startAge }), 1500);
       };
