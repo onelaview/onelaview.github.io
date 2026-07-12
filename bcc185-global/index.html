@@ -1,0 +1,57 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover" />
+  <title>My Learning Playground</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🌟</text></svg>" />
+  <style>
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+    body {
+      margin: 0; min-height: 100vh; font-family: "Baloo 2", "Comic Sans MS", system-ui, sans-serif;
+      background: linear-gradient(160deg, #6a4cff, #00c9c9);
+      color: #2b2140; display: flex; flex-direction: column; align-items: center;
+      padding: 32px 16px 60px;
+    }
+    h1 { font-size: clamp(28px, 7vw, 52px); color: #fff; text-align: center;
+      text-shadow: 0 3px 0 rgba(0,0,0,.15); margin: 12px 0 4px; }
+    .subtitle { color: #fff; font-size: clamp(14px, 3.5vw, 20px); margin: 0 0 28px; opacity: .95; }
+    .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 240px));
+      gap: 20px; width: 100%; max-width: 760px; justify-content: center; }
+    a.card {
+      background: #fff; border-radius: 24px; padding: 28px 18px; text-decoration: none;
+      color: #2b2140; text-align: center; box-shadow: 0 8px 0 rgba(0,0,0,.12);
+      transition: transform .1s, box-shadow .1s; display: flex; flex-direction: column;
+      align-items: center; gap: 10px; border: 4px solid #fff;
+    }
+    a.card:active { transform: translateY(6px); box-shadow: 0 2px 0 rgba(0,0,0,.12); }
+    .emoji { font-size: 64px; line-height: 1; }
+    .name { font-size: clamp(18px, 4vw, 24px); font-weight: bold; }
+    .tag { font-size: 13px; color: #78909c; }
+    footer { margin-top: 40px; color: #fff; opacity: .85; font-size: 13px; text-align: center; }
+  </style>
+</head>
+<body>
+  <h1>🌟 My Learning Playground 🌟</h1>
+  <p class="subtitle">Tap a game to start learning!</p>
+
+  <div class="grid" id="grid"></div>
+
+  <footer>Made with ❤️ &middot; bcc185-global</footer>
+
+  <script>
+    // Add a project here to make it show up on the home page.
+    const projects = [
+      { emoji: "🎨", name: "Color & Count Quest", tag: "Colors, numbers, words & sentences", href: "color-count-quest/" },
+    ];
+    const grid = document.getElementById("grid");
+    for (const p of projects) {
+      const a = document.createElement("a");
+      a.className = "card"; a.href = p.href;
+      a.innerHTML = `<span class="emoji">${p.emoji}</span>
+        <span class="name">${p.name}</span><span class="tag">${p.tag}</span>`;
+      grid.appendChild(a);
+    }
+  </script>
+</body>
+</html>

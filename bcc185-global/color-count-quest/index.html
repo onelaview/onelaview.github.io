@@ -1,0 +1,498 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover" />
+  <meta name="apple-mobile-web-app-capable" content="yes" />
+  <meta name="mobile-web-app-capable" content="yes" />
+  <meta name="theme-color" content="#6a4cff" />
+  <title>Color &amp; Count Quest</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🎨</text></svg>" />
+  <style>
+    :root {
+      --bg1: #6a4cff; --bg2: #00c9c9; --card: #ffffff; --ink: #2b2140;
+      --good: #37c26b; --bad: #ff5a76; --safe: env(safe-area-inset-bottom, 0px);
+    }
+    * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; -webkit-user-select: none; user-select: none; }
+    html, body { height: 100%; }
+    body {
+      margin: 0; font-family: "Baloo 2", "Comic Sans MS", system-ui, sans-serif;
+      background: linear-gradient(160deg, var(--bg1), var(--bg2)); color: var(--ink);
+      overflow: hidden; touch-action: manipulation;
+    }
+    #app { position: fixed; inset: 0; display: flex; flex-direction: column;
+      padding: calc(env(safe-area-inset-top,0px) + 8px) 14px calc(var(--safe) + 12px); }
+
+    /* Top bar */
+    .bar { display: flex; align-items: center; justify-content: space-between; gap: 8px; margin-bottom: 6px; }
+    .bar button { border: none; background: #ffffff; color: var(--ink); font-family: inherit;
+      font-weight: 800; font-size: 18px; border-radius: 16px; padding: 10px 14px;
+      box-shadow: 0 4px 0 rgba(0,0,0,.15); cursor: pointer; }
+    .bar button:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.15); }
+    .stars { background: #fff; border-radius: 16px; padding: 10px 16px; font-weight: 800; font-size: 18px;
+      box-shadow: 0 4px 0 rgba(0,0,0,.15); }
+
+    /* Screen body */
+    .screen { flex: 1; display: flex; flex-direction: column; min-height: 0; }
+    .title { color: #fff; text-align: center; font-size: clamp(20px, 6vw, 30px); font-weight: 800;
+      text-shadow: 0 3px 0 rgba(0,0,0,.15); margin: 4px 0 8px; }
+    .prompt { background: #fff; border-radius: 22px; padding: 14px 16px; text-align: center;
+      font-size: clamp(20px, 6vw, 28px); font-weight: 800; box-shadow: 0 6px 0 rgba(0,0,0,.12);
+      display: flex; align-items: center; justify-content: center; gap: 10px; }
+    .prompt .spk { font-size: 26px; }
+
+    .stage { flex: 1; display: flex; align-items: center; justify-content: center; min-height: 0;
+      flex-wrap: wrap; gap: 10px; padding: 10px 0; }
+    .icon { width: min(60vw, 260px); height: min(60vw, 260px); }
+    .scene { display: flex; flex-wrap: wrap; align-items: center; justify-content: center; gap: 10px; }
+    .scene .icon { width: min(34vw, 150px); height: min(34vw, 150px); }
+    .swatch { width: min(46vw, 190px); height: min(46vw, 190px); border-radius: 30px;
+      border: 5px solid #ffffff; box-shadow: 0 8px 0 rgba(0,0,0,.15); }
+    .numeral { font-size: min(40vw, 190px); font-weight: 900; color: #fff; line-height: 1;
+      text-shadow: 0 6px 0 rgba(0,0,0,.18); }
+
+    /* Answer choices */
+    .choices { display: grid; gap: 10px; grid-template-columns: 1fr 1fr; }
+    .choices.one { grid-template-columns: 1fr; }
+    .choice { border: 4px solid #fff; background: #fff; color: var(--ink); font-family: inherit;
+      font-weight: 800; font-size: clamp(17px, 4.6vw, 22px); border-radius: 20px; padding: 16px 10px;
+      min-height: 62px; box-shadow: 0 5px 0 rgba(0,0,0,.15); cursor: pointer; display: flex;
+      align-items: center; justify-content: center; gap: 8px; text-align: center; }
+    .choice:active { transform: translateY(3px); box-shadow: 0 1px 0 rgba(0,0,0,.15); }
+    .choice.good { background: var(--good); border-color: var(--good); color: #fff; }
+    .choice.bad  { background: var(--bad); border-color: var(--bad); color: #fff; }
+    .choice .ic { width: 42px; height: 42px; flex: none; }
+    .choice.big { font-size: clamp(20px, 6vw, 30px); min-height: 78px; }
+    .shake { animation: shake .35s; }
+    @keyframes shake { 0%,100%{transform:translateX(0)} 20%{transform:translateX(-8px)} 60%{transform:translateX(8px)} }
+
+    /* Menu */
+    .menu { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; align-content: start;
+      overflow-y: auto; padding: 4px; }
+    .menu .card { border: 4px solid #fff; background: #fff; border-radius: 22px; padding: 16px 10px;
+      text-align: center; box-shadow: 0 6px 0 rgba(0,0,0,.15); cursor: pointer; }
+    .menu .card:active { transform: translateY(3px); box-shadow: 0 2px 0 rgba(0,0,0,.15); }
+    .menu .card .big { font-size: 46px; line-height: 1; }
+    .menu .card .lbl { font-weight: 800; font-size: 17px; margin-top: 6px; }
+    .menu .card .sub { font-size: 12px; color: #7a7091; }
+
+    /* Spell */
+    .word-slots { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .slot { width: 42px; height: 54px; border-radius: 12px; background: #ffffff55; border: 3px dashed #fff;
+      display: flex; align-items: center; justify-content: center; font-size: 30px; font-weight: 900; color: #2b2140; }
+    .slot.filled { background: #fff; border-style: solid; }
+    .tiles { display: flex; gap: 8px; flex-wrap: wrap; justify-content: center; }
+    .tile { width: 50px; height: 58px; border-radius: 14px; background: #ffd23f; border: none;
+      font-family: inherit; font-size: 30px; font-weight: 900; color: #2b2140; box-shadow: 0 5px 0 #c99a00; cursor: pointer; }
+    .tile:active { transform: translateY(3px); box-shadow: 0 1px 0 #c99a00; }
+    .tile.used { visibility: hidden; }
+
+    /* Start overlay */
+    #start { position: fixed; inset: 0; background: linear-gradient(160deg, var(--bg1), var(--bg2));
+      display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 18px; z-index: 10; }
+    #start h1 { color: #fff; font-size: clamp(30px, 9vw, 54px); text-align: center; margin: 0;
+      text-shadow: 0 4px 0 rgba(0,0,0,.15); }
+    #start button { border: none; background: #ffd23f; color: #2b2140; font-family: inherit; font-weight: 900;
+      font-size: 26px; padding: 20px 36px; border-radius: 28px; box-shadow: 0 7px 0 #c99a00; cursor: pointer; }
+    #start button:active { transform: translateY(4px); box-shadow: 0 2px 0 #c99a00; }
+    .burst { position: fixed; inset: 0; pointer-events: none; display: flex; align-items: center;
+      justify-content: center; font-size: 120px; opacity: 0; z-index: 5; }
+    .burst.go { animation: pop .9s ease-out; }
+    @keyframes pop { 0%{opacity:0; transform:scale(.4)} 30%{opacity:1; transform:scale(1.1)} 100%{opacity:0; transform:scale(1.4)} }
+  </style>
+</head>
+<body>
+  <div id="start">
+    <h1>🎨 Color &amp; Count<br>Quest 🔢</h1>
+    <button id="startBtn">▶ Tap to Play</button>
+  </div>
+  <div class="burst" id="burst"></div>
+  <div id="app"></div>
+
+  <script>
+  /* ============================ DATA ============================ */
+  const COLORS = [
+    { name:"red",    hex:"#e53935" },
+    { name:"orange", hex:"#fb8c00" },
+    { name:"yellow", hex:"#fdd835" },
+    { name:"green",  hex:"#43a047" },
+    { name:"blue",   hex:"#1e88e5" },
+    { name:"purple", hex:"#8e24aa" },
+    { name:"pink",   hex:"#ec407a" },
+    { name:"brown",  hex:"#8d6e63" },
+    { name:"black",  hex:"#333333" },
+    { name:"white",  hex:"#ffffff" },
+    { name:"gray",   hex:"#9e9e9e" },
+  ];
+  const NUMWORDS = ["zero","one","two","three","four","five","six","seven","eight","nine","ten"];
+  const OBJECTS = [
+    { word:"pen",      icon:"pen" },
+    { word:"pencil",   icon:"pencil" },
+    { word:"eraser",   icon:"eraser" },
+    { word:"ruler",    icon:"ruler" },
+    { word:"book",     icon:"book" },
+    { word:"chair",    icon:"chair" },
+    { word:"desk",     icon:"desk" },
+    { word:"board",    icon:"board" },
+    { word:"school",   icon:"school" },
+    { word:"table",    icon:"table" },
+    { word:"piano",    icon:"piano" },
+    { word:"guitar",   icon:"guitar" },
+    { word:"drum",     icon:"drum" },
+    { word:"violin",   icon:"violin" },
+    { word:"backpack", icon:"backpack" },
+  ];
+
+  /* ============================ ICONS (SVG) ============================ */
+  const SVG = {
+    pen:`<g transform="rotate(45 50 50)"><rect x="43" y="18" width="14" height="50" rx="4"/><polygon points="43,68 57,68 50,84"/><rect x="43" y="24" width="14" height="6" fill="#ffffff88" stroke="none"/></g>`,
+    pencil:`<g transform="rotate(45 50 50)"><rect x="43" y="16" width="14" height="48" rx="2"/><polygon points="43,64 57,64 50,82"/><polygon points="47,74 53,74 50,82" fill="#00000055" stroke="none"/><rect x="43" y="16" width="14" height="7" fill="#00000030" stroke="none"/></g>`,
+    eraser:`<g transform="rotate(-20 50 50)"><rect x="28" y="42" width="44" height="22" rx="6"/><rect x="28" y="42" width="15" height="22" rx="6" fill="#00000028" stroke="none"/></g>`,
+    ruler:`<rect x="18" y="42" width="64" height="18" rx="3"/><g stroke="#00000055" stroke-width="2"><line x1="28" y1="42" x2="28" y2="52"/><line x1="38" y1="42" x2="38" y2="49"/><line x1="48" y1="42" x2="48" y2="52"/><line x1="58" y1="42" x2="58" y2="49"/><line x1="68" y1="42" x2="68" y2="52"/></g>`,
+    book:`<rect x="28" y="24" width="44" height="54" rx="4"/><rect x="28" y="24" width="11" height="54" fill="#00000033" stroke="none"/><g stroke="#ffffff99" stroke-width="3"><line x1="46" y1="36" x2="64" y2="36"/><line x1="46" y1="46" x2="64" y2="46"/><line x1="46" y1="56" x2="60" y2="56"/></g>`,
+    chair:`<rect x="34" y="20" width="9" height="42"/><rect x="34" y="50" width="34" height="9"/><rect x="36" y="58" width="7" height="22"/><rect x="60" y="58" width="7" height="22"/>`,
+    desk:`<rect x="18" y="40" width="64" height="9" rx="2"/><rect x="24" y="49" width="8" height="31"/><rect x="68" y="49" width="8" height="31"/><rect x="46" y="50" width="30" height="16" fill="#00000022" stroke="none"/><circle cx="70" cy="58" r="2" fill="#000" stroke="none"/>`,
+    board:`<rect x="22" y="22" width="56" height="36" rx="3"/><rect x="22" y="22" width="56" height="36" rx="3" fill="#ffffffcc" stroke="#00000055"/><g stroke="#00000045" stroke-width="2"><line x1="30" y1="32" x2="52" y2="32"/><line x1="30" y1="40" x2="46" y2="40"/><line x1="30" y1="48" x2="56" y2="48"/></g><g stroke-width="4"><line x1="44" y1="58" x2="40" y2="80"/><line x1="56" y1="58" x2="60" y2="80"/></g>`,
+    school:`<rect x="24" y="46" width="52" height="34"/><polygon points="22,47 50,26 78,47"/><rect x="46" y="62" width="9" height="18" fill="#00000038" stroke="none"/><rect x="31" y="54" width="9" height="9" fill="#ffffff99" stroke="none"/><rect x="60" y="54" width="9" height="9" fill="#ffffff99" stroke="none"/><line x1="50" y1="26" x2="50" y2="16"/><polygon points="50,16 63,19 50,23" fill="#00000045" stroke="none"/>`,
+    table:`<rect x="20" y="44" width="60" height="9" rx="2"/><rect x="26" y="53" width="7" height="27"/><rect x="67" y="53" width="7" height="27"/>`,
+    piano:`<rect x="22" y="32" width="56" height="36" rx="4"/><rect x="22" y="32" width="56" height="16" fill="#00000022" stroke="none"/><rect x="26" y="50" width="48" height="16" fill="#ffffffdd" stroke="#00000055"/><g fill="#111" stroke="none"><rect x="33" y="50" width="4" height="9"/><rect x="43" y="50" width="4" height="9"/><rect x="57" y="50" width="4" height="9"/><rect x="67" y="50" width="4" height="9"/></g>`,
+    guitar:`<ellipse cx="42" cy="64" rx="18" ry="22"/><circle cx="42" cy="64" r="6" fill="#00000045" stroke="none"/><rect x="55" y="16" width="9" height="42" rx="2" transform="rotate(32 59 37)"/>`,
+    drum:`<rect x="26" y="42" width="48" height="22"/><ellipse cx="50" cy="42" rx="24" ry="8" fill="#ffffffdd" stroke="#00000055"/><ellipse cx="50" cy="64" rx="24" ry="8"/><g stroke="#00000050" stroke-width="2"><line x1="32" y1="44" x2="40" y2="62"/><line x1="50" y1="46" x2="50" y2="64"/><line x1="68" y1="44" x2="60" y2="62"/></g>`,
+    violin:`<ellipse cx="44" cy="62" rx="14" ry="20"/><ellipse cx="44" cy="50" rx="10" ry="12"/><rect x="52" y="14" width="7" height="38" rx="2" transform="rotate(28 55 33)"/><g stroke="#00000055" stroke-width="2"><line x1="40" y1="58" x2="40" y2="70"/><line x1="48" y1="58" x2="48" y2="70"/></g>`,
+    backpack:`<rect x="30" y="34" width="40" height="46" rx="14"/><rect x="37" y="52" width="26" height="26" rx="7" fill="#00000022" stroke="#00000050"/><rect x="43" y="24" width="14" height="16" rx="7" fill="none" stroke="#00000055" stroke-width="3"/>`,
+  };
+  function iconSVG(name, hex, cls) {
+    const stroke = "#2b2140";
+    return `<svg class="${cls||'icon'}" viewBox="0 0 100 100" style="color:${hex}"
+      fill="currentColor" stroke="${stroke}" stroke-width="2.5" stroke-linejoin="round">${SVG[name]}</svg>`;
+  }
+
+  /* ============================ HELPERS ============================ */
+  const app = document.getElementById("app");
+  const burstEl = document.getElementById("burst");
+  const rnd = (n) => Math.floor(Math.random() * n);
+  const pick = (a) => a[rnd(a.length)];
+  const shuffle = (a) => { a = a.slice(); for (let i=a.length-1;i>0;i--){const j=rnd(i+1);[a[i],a[j]]=[a[j],a[i]];} return a; };
+  const sample = (a, n) => shuffle(a).slice(0, n);
+  const artFor = (w) => /^[aeiou]/i.test(w) ? "an" : "a";
+  const plural = (w) => w + "s";
+  const cap = (s) => s.charAt(0).toUpperCase() + s.slice(1);
+
+  let stars = +(localStorage.getItem("ccq_stars") || 0);
+
+  function speak(text) {
+    try {
+      if (!("speechSynthesis" in window)) return;
+      speechSynthesis.cancel();
+      const u = new SpeechSynthesisUtterance(text);
+      u.rate = 0.8; u.pitch = 1.15; u.lang = "en-US";
+      speechSynthesis.speak(u);
+    } catch (e) {}
+  }
+  function burst(emoji) {
+    burstEl.textContent = emoji;
+    burstEl.classList.remove("go"); void burstEl.offsetWidth; burstEl.classList.add("go");
+  }
+  function addStar() {
+    stars++; localStorage.setItem("ccq_stars", stars);
+    const s = document.getElementById("starCount"); if (s) s.textContent = stars;
+  }
+
+  function topBar(onRepeat) {
+    const bar = document.createElement("div");
+    bar.className = "bar";
+    bar.innerHTML = `<button id="homeBtn">🏠</button>
+      <div class="stars">⭐ <span id="starCount">${stars}</span></div>
+      <button id="repeatBtn">🔊</button>`;
+    bar.querySelector("#homeBtn").onclick = () => menu();
+    bar.querySelector("#repeatBtn").onclick = () => onRepeat && onRepeat();
+    return bar;
+  }
+  function screenFrame(titleText, onRepeat) {
+    app.innerHTML = "";
+    app.appendChild(topBar(onRepeat));
+    const scr = document.createElement("div");
+    scr.className = "screen";
+    if (titleText) {
+      const t = document.createElement("div"); t.className = "title"; t.textContent = titleText;
+      scr.appendChild(t);
+    }
+    app.appendChild(scr);
+    return scr;
+  }
+  // choice buttons; onPick(index, btn) returns true if correct
+  function choiceButtons(container, items, correctIdx, opts, onDone) {
+    opts = opts || {};
+    const box = document.createElement("div");
+    box.className = "choices" + (opts.one ? " one" : "") + (opts.big ? "" : "");
+    items.forEach((html, i) => {
+      const b = document.createElement("button");
+      b.className = "choice" + (opts.big ? " big" : "");
+      b.innerHTML = html;
+      b.onclick = () => {
+        if (i === correctIdx) {
+          b.classList.add("good");
+          [...box.children].forEach(c => c.disabled = true);
+          addStar(); burst(pick(["⭐","🎉","🌟","✨","👏"]));
+          onDone && onDone(true, b);
+        } else {
+          b.classList.add("bad", "shake");
+          setTimeout(() => b.classList.remove("bad", "shake"), 400);
+          speak("Try again");
+        }
+      };
+      box.appendChild(b);
+    });
+    container.appendChild(box);
+    return box;
+  }
+  function nextSoon(fn, ms) { setTimeout(fn, ms || 1400); }
+
+  /* ============================ MENU ============================ */
+  const MODES = [
+    { id:"listen",  big:"👂", lbl:"Listen & Tap",  sub:"Hear it, tap it" },
+    { id:"whats",   big:"❓", lbl:"What's this?",   sub:"a / an words" },
+    { id:"count",   big:"🔢", lbl:"One or Many?",   sub:"It's / They're" },
+    { id:"yesno",   big:"✅", lbl:"Yes or No?",     sub:"Is it? Are they?" },
+    { id:"spell",   big:"🔤", lbl:"Spell It",       sub:"Build the word" },
+    { id:"age",     big:"🎂", lbl:"How old?",       sub:"I'm seven" },
+  ];
+  function menu() {
+    speechSynthesis && speechSynthesis.cancel();
+    app.innerHTML = "";
+    app.appendChild(topBar(null));
+    app.querySelector("#homeBtn").style.visibility = "hidden";
+    const scr = document.createElement("div"); scr.className = "screen";
+    const t = document.createElement("div"); t.className = "title"; t.textContent = "Pick a Game!";
+    scr.appendChild(t);
+    const grid = document.createElement("div"); grid.className = "menu";
+    MODES.forEach(m => {
+      const c = document.createElement("div"); c.className = "card";
+      c.innerHTML = `<div class="big">${m.big}</div><div class="lbl">${m.lbl}</div><div class="sub">${m.sub}</div>`;
+      c.onclick = () => START[m.id]();
+      grid.appendChild(c);
+    });
+    scr.appendChild(grid);
+    app.appendChild(scr);
+  }
+
+  /* ============================ MODE 1: LISTEN & TAP ============================ */
+  function startListen() {
+    const kind = pick(["color","number","object"]);
+    let answerText, correctHTML, distract;
+    if (kind === "color") {
+      const opts = sample(COLORS, 4); const ans = pick(opts);
+      answerText = ans.name;
+      const items = opts.map(c => `<div class="swatch" style="width:100%;height:90px;border-radius:16px;background:${c.hex}"></div>`);
+      renderTapRound("Listen and tap!", answerText, items, opts.indexOf(ans), () => speak(answerText));
+      return;
+    }
+    if (kind === "number") {
+      const nums = sample([1,2,3,4,5,6,7,8,9,10], 4); const ans = pick(nums);
+      answerText = NUMWORDS[ans];
+      const items = nums.map(n => `<div class="numeral" style="font-size:64px;color:#2b2140;text-shadow:none">${n}</div>`);
+      renderTapRound("Listen and tap!", answerText, items, nums.indexOf(ans), () => speak(answerText));
+      return;
+    }
+    const objs = sample(OBJECTS, 4); const ans = pick(objs); const hex = pick(COLORS).hex;
+    answerText = ans.word;
+    const items = objs.map(o => iconSVG(o.icon, "#5b52d6", "ic"));
+    renderTapRound("Listen and tap!", answerText, items.map(h => `<div>${h.replace('class="ic"','class="icon"')}</div>`), objs.indexOf(ans), () => speak(answerText));
+  }
+  function renderTapRound(title, say, itemsHTML, correctIdx, sayFn) {
+    const scr = screenFrame(title, sayFn);
+    const prompt = document.createElement("div"); prompt.className = "prompt";
+    prompt.innerHTML = `<span class="spk">🔊</span> Tap the word you hear`;
+    scr.appendChild(prompt);
+    const box = document.createElement("div"); box.className = "choices"; box.style.flex = "1";
+    box.style.alignContent = "center";
+    itemsHTML.forEach((html, i) => {
+      const b = document.createElement("button"); b.className = "choice"; b.innerHTML = html;
+      b.onclick = () => {
+        if (i === correctIdx) { b.classList.add("good"); [...box.children].forEach(c=>c.disabled=true);
+          addStar(); burst("🌟"); speak(cap(say) + "!"); nextSoon(startListen); }
+        else { b.classList.add("bad","shake"); setTimeout(()=>b.classList.remove("bad","shake"),400); speak("Try again"); }
+      };
+      box.appendChild(b);
+    });
+    scr.appendChild(box);
+    setTimeout(sayFn, 350);
+  }
+
+  /* ============================ MODE 2: WHAT'S THIS? ============================ */
+  function startWhats() {
+    const obj = pick(OBJECTS);
+    const useColor = Math.random() < 0.7;
+    const color = useColor ? pick(COLORS) : null;
+    const firstWord = color ? color.name : obj.word;
+    const art = artFor(firstWord);
+    const answer = color ? `It's ${art} ${color.name} ${obj.word}.` : `It's ${art} ${obj.word}.`;
+
+    // distractors: wrong article, wrong color, wrong object
+    const wrongArt = art === "a" ? "an" : "a";
+    const set = new Set([answer]);
+    const distractors = [];
+    const wrongArtSent = color ? `It's ${wrongArt} ${color.name} ${obj.word}.` : `It's ${wrongArt} ${obj.word}.`;
+    if (!set.has(wrongArtSent)) { set.add(wrongArtSent); distractors.push(wrongArtSent); }
+    if (color) { const c2 = pick(COLORS.filter(c=>c.name!==color.name));
+      const s = `It's ${artFor(c2.name)} ${c2.name} ${obj.word}.`; if(!set.has(s)){set.add(s);distractors.push(s);} }
+    const o2 = pick(OBJECTS.filter(o=>o.word!==obj.word));
+    const s3 = color ? `It's ${artFor(color.name)} ${color.name} ${o2.word}.` : `It's ${artFor(o2.word)} ${o2.word}.`;
+    if (!set.has(s3)) { set.add(s3); distractors.push(s3); }
+    while (distractors.length < 3) { const oo=pick(OBJECTS); const cc=pick(COLORS);
+      const s=`It's ${artFor(cc.name)} ${cc.name} ${oo.word}.`; if(!set.has(s)){set.add(s);distractors.push(s);} }
+
+    const choices = shuffle([answer, ...distractors.slice(0,3)]);
+    const correctIdx = choices.indexOf(answer);
+    const hex = color ? color.hex : "#5b52d6";
+
+    const repeat = () => speak("What's this?");
+    const scr = screenFrame("What's this?", repeat);
+    const prompt = document.createElement("div"); prompt.className = "prompt";
+    prompt.innerHTML = `<span class="spk">🔊</span> What's this?`;
+    scr.appendChild(prompt);
+    const stage = document.createElement("div"); stage.className = "stage";
+    stage.innerHTML = iconSVG(obj.icon, hex, "icon");
+    scr.appendChild(stage);
+    choiceButtons(scr, choices, correctIdx, {}, (ok, b) => { speak(answer); nextSoon(startWhats); });
+    setTimeout(repeat, 350);
+  }
+
+  /* ============================ MODE 3: ONE OR MANY? ============================ */
+  function startCount() {
+    const obj = pick(OBJECTS);
+    const color = pick(COLORS);
+    const many = Math.random() < 0.5;
+    const count = many ? (2 + rnd(3)) : 1;
+    const art = artFor(color.name);
+    const singular = `It's ${art} ${color.name} ${obj.word}.`;
+    const pluralSent = `They're ${color.name} ${plural(obj.word)}.`;
+    const answer = many ? pluralSent : singular;
+
+    const repeat = () => speak(answer);
+    const scr = screenFrame("One or Many?", repeat);
+    const prompt = document.createElement("div"); prompt.className = "prompt";
+    prompt.innerHTML = many ? `Say it about <b>many</b>` : `Say it about <b>one</b>`;
+    scr.appendChild(prompt);
+    const stage = document.createElement("div"); stage.className = "stage";
+    const scene = document.createElement("div"); scene.className = "scene";
+    for (let i=0;i<count;i++) scene.innerHTML += iconSVG(obj.icon, color.hex, "icon");
+    stage.appendChild(scene); scr.appendChild(stage);
+
+    const choices = many
+      ? [pluralSent, singular]
+      : [singular, pluralSent];
+    const order = shuffle(choices);
+    choiceButtons(scr, order.map(cap2), order.indexOf(answer), {}, (ok,b)=>{ speak(answer); nextSoon(startCount); });
+    setTimeout(repeat, 350);
+  }
+  function cap2(s){ return s; }
+
+  /* ============================ MODE 4: YES / NO ============================ */
+  function startYesNo() {
+    const obj = pick(OBJECTS);
+    const realColor = pick(COLORS);
+    const many = Math.random() < 0.5;
+    const count = many ? (2 + rnd(3)) : 1;
+    const askTrue = Math.random() < 0.5;
+    const askColor = askTrue ? realColor : pick(COLORS.filter(c=>c.name!==realColor.name));
+
+    const question = many ? `Are they ${askColor.name}?` : `Is it ${askColor.name}?`;
+    const yes = many ? "Yes, they are." : "Yes, it is.";
+    const no  = many ? "No, they aren't." : "No, it isn't.";
+    const answer = askTrue ? yes : no;
+
+    const repeat = () => speak(question);
+    const scr = screenFrame("Yes or No?", repeat);
+    const prompt = document.createElement("div"); prompt.className = "prompt";
+    prompt.innerHTML = `<span class="spk">🔊</span> ${question}`;
+    scr.appendChild(prompt);
+    const stage = document.createElement("div"); stage.className = "stage";
+    const scene = document.createElement("div"); scene.className = "scene";
+    for (let i=0;i<count;i++) scene.innerHTML += iconSVG(obj.icon, realColor.hex, "icon");
+    stage.appendChild(scene); scr.appendChild(stage);
+
+    const order = shuffle([yes, no]);
+    const items = order.map(s => (s.startsWith("Yes") ? "✅ " : "❌ ") + s);
+    choiceButtons(scr, items, order.indexOf(answer), {big:true}, (ok,b)=>{
+      speak(answer + " It's " + (many? realColor.name : realColor.name) + "."); nextSoon(startYesNo);
+    });
+    setTimeout(repeat, 350);
+  }
+
+  /* ============================ MODE 5: SPELL IT ============================ */
+  function startSpell() {
+    const obj = pick(OBJECTS);
+    const color = pick(COLORS);
+    const word = obj.word;
+    const letters = word.split("");
+    // extra decoy letters
+    const alphabet = "abcdefghijklmnopqrstuvwxyz".split("");
+    const decoys = sample(alphabet.filter(l=>!letters.includes(l)), Math.min(3, 8));
+    const tiles = shuffle([...letters, ...decoys]);
+
+    const repeat = () => speak("Spell " + word);
+    const scr = screenFrame("Spell It", repeat);
+    const prompt = document.createElement("div"); prompt.className = "prompt";
+    prompt.innerHTML = `<span class="spk">🔊</span> Spell the word`;
+    scr.appendChild(prompt);
+    const stage = document.createElement("div"); stage.className = "stage"; stage.style.flexDirection="column"; stage.style.gap="14px";
+    stage.innerHTML = iconSVG(obj.icon, color.hex, "icon");
+    const slots = document.createElement("div"); slots.className = "word-slots";
+    const slotEls = letters.map(() => { const s=document.createElement("div"); s.className="slot"; slots.appendChild(s); return s; });
+    stage.appendChild(slots);
+    scr.appendChild(stage);
+
+    const tileWrap = document.createElement("div"); tileWrap.className = "tiles";
+    let pos = 0;
+    tiles.forEach(ch => {
+      const b = document.createElement("button"); b.className = "tile"; b.textContent = ch;
+      b.onclick = () => {
+        if (pos >= letters.length) return;
+        if (ch === letters[pos]) {
+          slotEls[pos].textContent = ch; slotEls[pos].classList.add("filled");
+          b.classList.add("used"); pos++;
+          if (pos === letters.length) {
+            addStar(); burst("🎉"); speak(cap(word) + "! Well done!");
+            nextSoon(startSpell, 1800);
+          }
+        } else {
+          b.classList.add("shake"); setTimeout(()=>b.classList.remove("shake"),400); speak("Try again");
+        }
+      };
+      tileWrap.appendChild(b);
+    });
+    scr.appendChild(tileWrap);
+    setTimeout(repeat, 350);
+  }
+
+  /* ============================ MODE 6: HOW OLD? ============================ */
+  function startAge() {
+    const repeat = () => speak("How old are you?");
+    const scr = screenFrame("How old are you?", repeat);
+    const prompt = document.createElement("div"); prompt.className = "prompt";
+    prompt.innerHTML = `<span class="spk">🔊</span> How old are you?`;
+    scr.appendChild(prompt);
+    const grid = document.createElement("div"); grid.className = "choices";
+    grid.style.gridTemplateColumns = "repeat(3, 1fr)"; grid.style.flex="1"; grid.style.alignContent="center";
+    for (let n=1; n<=10; n++) {
+      const b = document.createElement("button"); b.className="choice big"; b.textContent = n;
+      b.onclick = () => { b.classList.add("good"); addStar(); burst("🎂");
+        speak("I'm " + NUMWORDS[n] + "."); };
+      grid.appendChild(b);
+    }
+    scr.appendChild(grid);
+    setTimeout(repeat, 350);
+  }
+
+  const START = { listen:startListen, whats:startWhats, count:startCount, yesno:startYesNo, spell:startSpell, age:startAge };
+
+  /* ============================ BOOT ============================ */
+  document.getElementById("startBtn").onclick = () => {
+    speak(" "); // unlock audio on user gesture
+    document.getElementById("start").style.display = "none";
+    menu();
+  };
+  </script>
+</body>
+</html>
