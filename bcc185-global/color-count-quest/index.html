@@ -300,7 +300,9 @@
     home.textContent = "🏠 Home"; home.onclick = () => menu();
     btns.append(again, home); box.appendChild(btns);
     scr.appendChild(box); app.appendChild(scr);
-    burst(opts.emoji || "🏆"); speak(opts.say || "Great job! You finished.");
+    burst(opts.emoji || "🏆");
+    const line = ("say" in opts) ? opts.say : "Great job! You finished.";
+    if (line) speak(line);
   }
 
   /* ============================ MENU ============================ */
@@ -539,7 +541,7 @@
         [...grid.children].forEach(c => c.disabled = true);
         burst("🎂"); speak("I'm " + NUMWORDS[n] + ".");
         setTimeout(() => finish({ emoji:"🎂", title:`You're ${NUMWORDS[n]}!`,
-          sub:`"I'm ${NUMWORDS[n]}."`, say:"I'm " + NUMWORDS[n] + ".", replay:startAge }), 1500);
+          sub:`"I'm ${NUMWORDS[n]}."`, say:"", replay:startAge }), 1500);
       };
       grid.appendChild(b);
     }
