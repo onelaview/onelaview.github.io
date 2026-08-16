@@ -161,7 +161,7 @@
     <div class="rules">
       <div><span class="k">🔟</span><span>10 questions, 30 seconds each</span></div>
       <div><span class="k">✖️</span><span><b>X2</b> — double points for one answer</span></div>
-      <div><span class="k">✂️</span><span><b>50:50</b> — remove a wrong choice</span></div>
+      <div><span class="k">✂️</span><span><b>50:50</b> — remove two wrong choices</span></div>
       <div><span class="k">⏱️</span><span><b>+5s</b> — more time on one question</span></div>
     </div>
     <button class="bigbtn" id="startBtn">▶ Tap to Play</button>
@@ -523,10 +523,9 @@
       const wrongs = [...choicesEl.children].filter(
         (c) => +c.dataset.value !== game.q.answer && !c.classList.contains("gone") && !c.disabled);
       if (!wrongs.length) return false;         // nothing left to remove — keep the power
-      const victim = pick(wrongs);
-      victim.classList.add("gone");
-      victim.disabled = true;
-      speak("One wrong answer removed.");
+      const victims = shuffle(wrongs).slice(0, 2);   // leaves the answer and one other
+      victims.forEach((v) => { v.classList.add("gone"); v.disabled = true; });
+      speak(victims.length > 1 ? "Two wrong answers removed." : "One wrong answer removed.");
     },
     time() {
       addTime(EXTRA_MS);

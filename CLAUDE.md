@@ -45,7 +45,7 @@ Unlike Color & Count Quest this page does **not** rebuild the whole screen per q
 - `buildChoices()` returns the answer plus 3 near misses (±1, ±2, then ±3/±5/±10), clamped to range and de-duplicated.
 - Timer is one `requestAnimationFrame` loop over `endsAt`/`totalMs`; the "+5s" power calls `addTime()` which bumps **both**, so the bar stays proportional instead of jumping past 100%.
 - Scoring: `BASE_POINTS + SPEED_BONUS × whole seconds left`, doubled when `x2Armed`. Only a **first-try** correct answer scores — a wrong tap sets `q.missed`, disables that tile, and leaves the clock running so the child can still find the answer.
-- Powers live in `game.powersLeft` (one use each per game) and are applied by the `POWERS` map; a handler returning `false` (50:50 with nothing left to remove) keeps the power unspent.
+- Powers live in `game.powersLeft` (one use each per game) and are applied by the `POWERS` map; a handler returning `false` (50:50 with nothing left to remove) keeps the power unspent. 50:50 cuts up to 2 wrong tiles, so it can leave fewer than 2 live tiles if the child already tapped a wrong one.
 - `game.active` guards the queued `setTimeout(nextQuestion)` so leaving via 🏠 mid-round doesn't restart the timer behind the start screen.
 - Persisted keys: `tgm_best` (high score), `tgm_sound` (speech on/off).
 
