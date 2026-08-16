@@ -111,6 +111,7 @@
     #start button { border: none; background: #ffd23f; color: #2b2140; font-family: inherit; font-weight: 900;
       font-size: 26px; padding: 20px 36px; border-radius: 28px; box-shadow: 0 7px 0 #c99a00; cursor: pointer; }
     #start button:active { transform: translateY(4px); box-shadow: 0 2px 0 #c99a00; }
+    .hublink { color: #fff; font-weight: 800; font-size: 14px; opacity: .9; text-decoration: none; }
     .burst { position: fixed; inset: 0; pointer-events: none; display: flex; align-items: center;
       justify-content: center; font-size: 120px; opacity: 0; z-index: 5; }
     .burst.go { animation: pop .9s ease-out; }
@@ -121,6 +122,7 @@
   <div id="start">
     <h1>🎨 Color &amp; Count<br>Quest 🔢</h1>
     <button id="startBtn">▶ Tap to Play</button>
+    <a class="hublink" href="../">← All games</a>
   </div>
   <div class="burst" id="burst"></div>
   <div id="app"></div>
@@ -319,7 +321,10 @@
     speechSynthesis && speechSynthesis.cancel();
     app.innerHTML = "";
     app.appendChild(topBar(null));
-    app.querySelector("#homeBtn").style.visibility = "hidden";
+    // on the menu there is no game to leave, so the home button goes back to the playground
+    const back = app.querySelector("#homeBtn");
+    back.textContent = "⬅"; back.setAttribute("aria-label", "All games");
+    back.onclick = () => { location.href = "../"; };
     const scr = document.createElement("div"); scr.className = "screen";
     const t = document.createElement("div"); t.className = "title"; t.textContent = "Pick a Game!";
     scr.appendChild(t);

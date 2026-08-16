@@ -53,6 +53,8 @@ Unlike Color & Count Quest this page does **not** rebuild the whole screen per q
 
 Add a card to the `projects` array in `bcc185-global/index.html` and create `bcc185-global/<slug>/index.html`. Match the existing look: gradient `#6a4cff → #00c9c9`, white rounded cards with a hard `box-shadow` offset that collapses on `:active`, `Baloo 2 / Comic Sans MS` stack, emoji `data:image/svg+xml` favicon.
 
+Every game needs a way back to the hub at `../`: a `← All games` link on the start overlay, plus a `⬅` in the top bar on whatever screen is that game's own home (where the 🏠 button has nothing to return to).
+
 To add a mini game inside Color & Count Quest: write `startX()` that renders one round and calls `advance(startX)`, then register it in both `MODES` and `START`.
 
 ## Commits
