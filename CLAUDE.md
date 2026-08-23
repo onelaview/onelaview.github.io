@@ -49,6 +49,34 @@ Unlike Color & Count Quest this page does **not** rebuild the whole screen per q
 - `game.active` guards the queued `setTimeout(nextQuestion)` so leaving via 🏠 mid-round doesn't restart the timer behind the start screen.
 - Persisted keys: `tgm_best` (high score), `tgm_sound` (speech on/off).
 
+## Architecture of ไตรยางศ์ Tone Sort
+
+`bcc185-global/thai-tone-sort/index.html` — sort all 44 Thai consonants (ก–ฮ) into the three
+tone classes. No timer; marking happens only once every letter is in a box.
+
+- `LETTERS` is the single source of truth: `[letter, Thai name, romanisation, emoji, class]`
+  with class `h` (สูง, 11), `m` (กลาง, 9), `l` (ต่ำ, 24). The counts are fixed by Thai
+  orthography — if you touch this array, re-check those three totals and that it still covers
+  ก–ฮ exactly once.
+- State is two lists: `game.left` (still to place, `left[0]` is the card on screen) and
+  `game.answers` (`{it, cls}` in placement order). Placing shifts from one into the other;
+  tapping a letter chip inside a box, or `↺ ย้อนกลับ`, moves it back with `unshift`, so the
+  child can revise everything before checking. `check()` refuses to run while `game.left` is
+  non-empty, and `#checkBtn` only unhides when the card is gone.
+- The card is dragged with pointer capture. `.dragging` sets `pointer-events:none` so
+  `elementFromPoint` sees the box underneath rather than the card itself — capture keeps
+  delivering the move/up events to the card regardless.
+- `[hidden]` is `!important` on purpose: `#card` sets `display:flex` at id specificity and
+  would otherwise stay visible when hidden. Same trap applies to any new id-styled element.
+- `#game > .stage` and `#game > .boxes` need their own id-level `flex` rules, because
+  `#game > *` sets `flex:none` and out-specifies a class selector. Without them the screen
+  does not fill the phone.
+- Audio is entirely synthesised — there are no asset files. `ac()` builds the graph on the
+  first user gesture; `sfx()` plays short envelopes, and `musicTick()` is a lookahead
+  scheduler running a four-bar I–vi–IV–V loop through `musG`. Toggling music only ramps
+  `musG.gain`, so the loop stays in step. `speak()` reads the consonant name with `lang="th-TH"`.
+- Persisted keys: `tts_best` (best percentage), `tts_sound`, `tts_music`.
+
 ## Adding a game
 
 Add a card to the `projects` array in `bcc185-global/index.html` and create `bcc185-global/<slug>/index.html`. Match the existing look: gradient `#6a4cff → #00c9c9`, white rounded cards with a hard `box-shadow` offset that collapses on `:active`, `Baloo 2 / Comic Sans MS` stack, emoji `data:image/svg+xml` favicon.

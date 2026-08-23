@@ -1,0 +1,518 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#5b3fd6">
+<title>ไตรยางศ์ · Thai Tone Sort</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🔤</text></svg>">
+<style>
+:root{
+  --ink:#2b2140;--hi:#ff5f8f;--hi-d:#c33665;--mid:#ffb02e;--mid-d:#c9810c;--lo:#4f8cff;--lo-d:#2a5fcf;
+  --paper:#fffaf3;--safe:env(safe-area-inset-bottom,0px);--top:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{height:100%}
+body{margin:0;overflow:hidden;color:var(--ink);
+  font-family:"Baloo 2","Noto Sans Thai","Sarabun","Leelawadee UI","Thonburi","Comic Sans MS",system-ui,sans-serif;
+  background:linear-gradient(160deg,#6a4cff 0%,#8a5cf0 45%,#00c9c9 100%)}
+button,a{font:inherit}
+
+/* floating Thai letters in the background */
+#bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+#bg span{position:absolute;color:#fff;opacity:.13;font-weight:900;font-size:clamp(52px,15vw,130px);animation:float 16s ease-in-out infinite}
+#bg span:nth-child(1){left:-2%;top:6%}
+#bg span:nth-child(2){right:2%;top:20%;animation-delay:-4s}
+#bg span:nth-child(3){left:6%;bottom:12%;animation-delay:-8s}
+#bg span:nth-child(4){right:8%;bottom:4%;animation-delay:-12s}
+#bg span:nth-child(5){left:44%;top:44%;animation-delay:-6s}
+@keyframes float{50%{transform:translateY(-30px) rotate(10deg)}}
+
+/* ---------- overlays (start / results) ---------- */
+.overlay{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  text-align:center;gap:12px;padding:calc(var(--top) + 18px) 16px calc(var(--safe) + 24px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.overlay[hidden],#game[hidden],[hidden]{display:none!important}
+.overlay>*{flex:none}
+.spacer{flex:1 1 auto;min-height:0}
+h1{margin:0;color:#fff;font-size:clamp(34px,9.5vw,58px);line-height:1.05;text-shadow:0 5px 0 #3a1f8c66}
+.subtitle{margin:0;color:#fff;font-weight:800;font-size:clamp(15px,4vw,20px);opacity:.95}
+.mascot{font-size:clamp(52px,15vw,84px);line-height:1;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-9px) rotate(4deg)}}
+.panel{width:min(94vw,420px);background:#fffffff2;border-radius:26px;padding:14px 18px;box-shadow:0 8px 0 #2a166b3d;text-align:left}
+.bigbtn{border:0;border-radius:26px;padding:15px 30px;background:#ffd34e;color:var(--ink);font-size:21px;font-weight:900;
+  box-shadow:0 7px 0 #c99b11;cursor:pointer;width:min(94vw,420px)}
+.bigbtn:active{transform:translateY(4px);box-shadow:0 3px 0 #c99b11}
+.bigbtn.alt{background:#fff;box-shadow:0 7px 0 #2a166b55}
+.bigbtn small{display:block;font-size:13px;font-weight:800;opacity:.7}
+.hublink{color:#fff;font-weight:850;text-decoration:none;padding:6px}
+.legend{display:flex;gap:8px;width:min(94vw,420px)}
+.legend div{flex:1;border-radius:18px;padding:9px 4px;color:#fff;font-weight:900;font-size:14px;line-height:1.25;text-align:center}
+.legend b{display:block;font-size:22px}
+.lg-h{background:linear-gradient(160deg,#ff7fa5,#e63e73);box-shadow:0 5px 0 var(--hi-d)}
+.lg-m{background:linear-gradient(160deg,#ffc75f,#f0930c);box-shadow:0 5px 0 var(--mid-d)}
+.lg-l{background:linear-gradient(160deg,#7fb0ff,#3568e0);box-shadow:0 5px 0 var(--lo-d)}
+.tipbtn{border:0;background:#ffffff33;color:#fff;font-weight:900;border-radius:20px;padding:9px 18px;cursor:pointer;backdrop-filter:blur(3px)}
+.tip{font-size:14px;line-height:1.6;font-weight:700}
+.tip .row{padding:7px 0;border-bottom:1px dashed #d9d2ea}
+.tip .row:last-child{border:0}
+.tip .glyphs{font-size:19px;font-weight:900;letter-spacing:3px;word-spacing:1px;line-height:1.5}
+.tip .k{font-weight:900}
+.k-h{color:var(--hi-d)}.k-m{color:var(--mid-d)}.k-l{color:var(--lo-d)}
+
+/* ---------- game screen ---------- */
+#game{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:7px;
+  padding:calc(var(--top) + 7px) 10px calc(var(--safe) + 8px)}
+#game>*{width:100%;max-width:620px;flex:none}
+#game>.stage{flex:1 1 40%}
+#game>.boxes{flex:1.35 1 60%}
+.top{display:flex;align-items:center;justify-content:space-between;gap:7px}
+.iconbtn{border:0;background:#fff;color:var(--ink);width:42px;height:42px;border-radius:15px;box-shadow:0 4px 0 #2a166b55;font-size:18px;font-weight:900;cursor:pointer}
+.iconbtn:active{transform:translateY(2px);box-shadow:0 2px 0 #2a166b55}
+.iconbtn.off{opacity:.45}
+.chip{background:#fff;border-radius:15px;box-shadow:0 4px 0 #2a166b55;padding:8px 14px;font-weight:900;font-size:16px}
+.meta{display:flex;justify-content:space-between;color:#fff;font-size:13px;font-weight:900;text-shadow:0 2px #2a166b55;padding:0 3px}
+.pbar{height:12px;border-radius:20px;overflow:hidden;background:#ffffff55;box-shadow:inset 0 2px 4px #2a166b55}
+.pfill{height:100%;width:0;border-radius:20px;background:linear-gradient(90deg,#ffe066,#7dffb0);transition:width .3s ease}
+
+/* the letter card */
+.stage{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px;position:relative}
+#card{background:var(--paper);border-radius:28px;box-shadow:0 9px 0 #2a166b45;padding:8px 22px 12px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;cursor:grab;touch-action:none;
+  border:5px solid #fff;min-width:min(74vw,260px);animation:pop .28s ease}
+#card.dragging{cursor:grabbing;pointer-events:none;box-shadow:0 16px 26px #2a166b55;z-index:9;transition:none}
+@keyframes pop{from{transform:scale(.7) rotate(-6deg);opacity:0}}
+.c-emoji{font-size:clamp(26px,8vw,40px);line-height:1}
+.c-letter{font-size:clamp(56px,19vw,104px);line-height:1.05;font-weight:900;
+  background:linear-gradient(150deg,#6a4cff,#ff5f8f 55%,#f0930c);-webkit-background-clip:text;background-clip:text;color:transparent}
+.c-name{font-size:clamp(18px,5vw,26px);font-weight:900;line-height:1.1}
+.c-roman{font-size:12px;font-weight:800;color:#8a7fa6;letter-spacing:.6px}
+.hint{color:#fff;font-size:clamp(12px,3.3vw,15px);font-weight:850;text-shadow:0 2px #2a166b55;text-align:center;line-height:1.3}
+
+/* the three boxes */
+.boxes{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;min-height:170px}
+.box{position:relative;border-radius:22px;padding:6px 5px 4px;display:flex;flex-direction:column;gap:4px;
+  cursor:pointer;color:#fff;border:4px solid #ffffff5c;transition:transform .12s,filter .12s;overflow:hidden}
+.box[data-cls=h]{background:linear-gradient(165deg,#ff85a9,#e33a70);box-shadow:0 6px 0 var(--hi-d)}
+.box[data-cls=m]{background:linear-gradient(165deg,#ffcb6b,#ef8f09);box-shadow:0 6px 0 var(--mid-d)}
+.box[data-cls=l]{background:linear-gradient(165deg,#86b4ff,#3468e2);box-shadow:0 6px 0 var(--lo-d)}
+.box.hot{transform:translateY(-5px) scale(1.05);filter:brightness(1.14);border-color:#fff}
+.box:active{transform:translateY(3px)}
+.box .bh{font-weight:900;font-size:clamp(12px,3.4vw,15px);line-height:1.15;text-align:center;text-shadow:0 2px #0003}
+.box .bh i{font-style:normal;display:block;font-size:16px}
+.box .bn{position:absolute;top:5px;right:8px;font-size:12px;font-weight:900;opacity:.85}
+.chips{flex:1;min-height:0;overflow-y:auto;-webkit-overflow-scrolling:touch;display:flex;flex-wrap:wrap;gap:4px;
+  align-content:flex-start;justify-content:center;padding:3px 2px}
+.chips::-webkit-scrollbar{width:3px}.chips::-webkit-scrollbar-thumb{background:#ffffff66;border-radius:9px}
+.lt{width:29px;height:29px;border-radius:10px;background:#ffffffee;color:var(--ink);font-size:19px;font-weight:900;
+  display:flex;align-items:center;justify-content:center;box-shadow:0 2px 0 #0002;animation:drop .3s ease}
+@keyframes drop{from{transform:scale(.3) translateY(-16px);opacity:0}}
+.box.hintflash{animation:flash .5s 3}
+@keyframes flash{50%{filter:brightness(1.6) saturate(1.3);transform:scale(1.06)}}
+.tools{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.tool{border:0;border-radius:18px;padding:9px 4px;background:#ffffffe6;color:var(--ink);font-weight:900;font-size:15px;
+  box-shadow:0 4px 0 #2a166b55;cursor:pointer}
+.tool:active{transform:translateY(2px);box-shadow:0 2px 0 #2a166b55}
+.tool:disabled{opacity:.45;box-shadow:0 4px 0 #2a166b33}
+#checkBtn{background:linear-gradient(160deg,#8dff9d,#20c46a);color:#0d3d22;box-shadow:0 7px 0 #128047;
+  border:0;border-radius:24px;padding:16px;font-size:22px;font-weight:900;width:min(74vw,300px);cursor:pointer;animation:ready 1.1s ease-in-out infinite}
+#checkBtn:active{transform:translateY(4px);box-shadow:0 3px 0 #128047}
+@keyframes ready{50%{transform:scale(1.045)}}
+
+/* ---------- results ---------- */
+.scorebig{font-size:58px;font-weight:950;color:#3b2a86;line-height:1}
+.stars{font-size:27px;letter-spacing:2px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-weight:800;font-size:15px;border-bottom:1px dashed #e2dcf0}
+.row:last-child{border:0}
+.review{width:min(94vw,420px);background:#fffffff2;border-radius:26px;padding:12px;box-shadow:0 8px 0 #2a166b3d;text-align:left}
+.review h3{margin:2px 0 8px;font-size:16px;text-align:center}
+.rgrid{display:grid;grid-template-columns:repeat(3,1fr);gap:7px}
+.rcol{border-radius:16px;padding:6px 4px;color:#fff;text-align:center}
+.rcol[data-cls=h]{background:linear-gradient(165deg,#ff85a9,#e33a70)}
+.rcol[data-cls=m]{background:linear-gradient(165deg,#ffcb6b,#ef8f09)}
+.rcol[data-cls=l]{background:linear-gradient(165deg,#86b4ff,#3468e2)}
+.rcol .t{font-weight:900;font-size:13px;line-height:1.2;margin-bottom:5px;text-shadow:0 2px #0003}
+.rcol .g{display:flex;flex-wrap:wrap;gap:3px;justify-content:center}
+.rcol .lt{width:25px;height:25px;font-size:16px;border-radius:8px;animation:none}
+.lt.ok{background:#d9ffe4;color:#12703f;box-shadow:0 2px 0 #0002}
+.lt.no{background:#ffdede;color:#b31f3d;box-shadow:0 2px 0 #0002}
+.misses{margin-top:9px;max-height:26vh;overflow-y:auto;font-size:14px;font-weight:750;line-height:1.5}
+.misses div{padding:4px 2px;border-bottom:1px dashed #e2dcf0;display:flex;align-items:center;gap:7px}
+.misses .lt{width:27px;height:27px;font-size:17px;background:#ffdede;color:#b31f3d;flex:none}
+.float{position:fixed;z-index:10;font-size:27px;font-weight:950;color:#fff;text-shadow:0 3px #0005;pointer-events:none}
+.conf{position:fixed;z-index:10;width:11px;height:11px;border-radius:3px;pointer-events:none}
+@media(max-height:680px){
+  #game{gap:5px}.iconbtn{width:37px;height:37px;font-size:16px}.chip{padding:6px 11px;font-size:14px}
+  .boxes{min-height:150px}#card{padding:5px 16px 8px}.c-emoji{font-size:24px}.lt{width:26px;height:26px;font-size:17px}
+  .tool{padding:7px 3px;font-size:14px}#checkBtn{padding:12px;font-size:19px}
+}
+</style>
+</head>
+<body>
+<div id="bg"><span>ก</span><span>ส</span><span>ม</span><span>ฉ</span><span>ป</span></div>
+
+<!-- ======= START ======= -->
+<section class="overlay" id="start">
+  <div class="mascot">🐘📚</div>
+  <h1>ไตรยางศ์</h1>
+  <p class="subtitle">แยกพยัญชนะไทย ก–ฮ ตามเสียง สูง · กลาง · ต่ำ</p>
+  <div class="legend">
+    <div class="lg-h"><b>▲</b>อักษรสูง<br>11 ตัว</div>
+    <div class="lg-m"><b>●</b>อักษรกลาง<br>9 ตัว</div>
+    <div class="lg-l"><b>▼</b>อักษรต่ำ<br>24 ตัว</div>
+  </div>
+  <div class="panel tip">
+    <div class="row">🎯 ลากหรือแตะพยัญชนะใส่กล่องให้ถูกเสียง</div>
+    <div class="row">⏳ ไม่จับเวลา ค่อย ๆ คิดได้เลย</div>
+    <div class="row">✅ ตรวจคำตอบเมื่อใส่ครบทุกตัวแล้วเท่านั้น</div>
+    <div class="row">↩️ แตะตัวอักษรในกล่องเพื่อเอาออกมาแก้ได้</div>
+  </div>
+  <button class="bigbtn" id="playAll">▶ เล่นครบ 44 ตัว<small>ก ถึง ฮ ทั้งหมด</small></button>
+  <button class="bigbtn alt" id="playShort">🌱 ฝึกหัด 15 ตัว<small>สุ่มมาให้พอดีคำ</small></button>
+  <button class="tipbtn" id="tipBtn">📖 วิธีจำ</button>
+  <div class="panel tip" id="tipBox" hidden>
+    <div class="row"><span class="k k-m">อักษรกลาง 9 ตัว</span> — “ไก่ จิก เด็ก ตาย เด็ก ตาย บน ปาก โอ่ง”
+      <div class="glyphs k-m">ก จ ด ต ฎ ฏ บ ป อ</div></div>
+    <div class="row"><span class="k k-h">อักษรสูง 11 ตัว</span> — “ผี ฝาก ถุง ข้าว สาร ให้ ฉัน”
+      <div class="glyphs k-h">ผ ฝ ถ ฐ ข ฃ ส ศ ษ ห ฉ</div></div>
+    <div class="row"><span class="k k-l">อักษรต่ำ 24 ตัว</span> — ที่เหลือทั้งหมด จำสองพวกบนให้ได้ ที่เหลือคือเสียงต่ำ
+      <div class="glyphs k-l">ค ฅ ฆ ง ช ซ ฌ ญ ฑ ฒ ณ ท ธ น พ ฟ ภ ม ย ร ล ว ฬ ฮ</div></div>
+  </div>
+  <div class="spacer"></div>
+  <a class="hublink" href="../">← All games</a>
+</section>
+
+<!-- ======= GAME ======= -->
+<main id="game" hidden>
+  <div class="top">
+    <button class="iconbtn" id="homeBtn" aria-label="กลับหน้าแรก">⬅</button>
+    <div class="chip">📥 <span id="doneN">0</span>/<span id="totalN">44</span></div>
+    <button class="iconbtn" id="soundBtn" aria-label="เสียงเอฟเฟกต์">🔊</button>
+    <button class="iconbtn" id="musicBtn" aria-label="เพลงประกอบ">🎵</button>
+  </div>
+  <div class="meta"><span id="leftLbl">เหลืออีก 44 ตัว</span><span id="pctLbl">0%</span></div>
+  <div class="pbar"><div class="pfill" id="pfill"></div></div>
+
+  <div class="stage" id="stage">
+    <div id="card">
+      <div class="c-emoji" id="cEmoji">🐔</div>
+      <div class="c-letter" id="cLetter">ก</div>
+      <div class="c-name" id="cName">ก ไก่</div>
+      <div class="c-roman" id="cRoman">ko kai</div>
+    </div>
+    <p class="hint" id="cHint">ลากลงกล่อง หรือแตะกล่องที่คิดว่าถูก</p>
+    <button id="checkBtn" hidden>✅ ตรวจคำตอบ</button>
+  </div>
+
+  <div class="boxes">
+    <div class="box" data-cls="h"><span class="bn" id="nH">0</span><div class="bh"><i>▲</i>อักษรสูง</div><div class="chips" id="chH"></div></div>
+    <div class="box" data-cls="m"><span class="bn" id="nM">0</span><div class="bh"><i>●</i>อักษรกลาง</div><div class="chips" id="chM"></div></div>
+    <div class="box" data-cls="l"><span class="bn" id="nL">0</span><div class="bh"><i>▼</i>อักษรต่ำ</div><div class="chips" id="chL"></div></div>
+  </div>
+
+  <div class="tools">
+    <button class="tool" id="undoBtn">↺ ย้อนกลับ</button>
+    <button class="tool" id="hintBtn">💡 คำใบ้ (3)</button>
+  </div>
+</main>
+
+<!-- ======= RESULTS ======= -->
+<section class="overlay" id="end" hidden>
+  <div class="mascot" id="medal">🏆</div>
+  <h1 id="endTitle">เก่งมาก!</h1>
+  <div class="panel" style="text-align:center">
+    <div class="scorebig" id="endScore">0%</div>
+    <div class="stars" id="endStars">⭐⭐⭐</div>
+    <div class="row"><span>✅ ถูก</span><b id="rOk">0</b></div>
+    <div class="row"><span>❌ ผิด</span><b id="rNo">0</b></div>
+    <div class="row"><span>💡 ใช้คำใบ้</span><b id="rHint">0</b></div>
+    <div class="row"><span>🏅 สถิติสูงสุด</span><b id="rBest">0%</b></div>
+  </div>
+  <div class="review">
+    <h3>ผลการจัดกล่อง</h3>
+    <div class="rgrid">
+      <div class="rcol" data-cls="h"><div class="t">▲ อักษรสูง</div><div class="g" id="rvH"></div></div>
+      <div class="rcol" data-cls="m"><div class="t">● อักษรกลาง</div><div class="g" id="rvM"></div></div>
+      <div class="rcol" data-cls="l"><div class="t">▼ อักษรต่ำ</div><div class="g" id="rvL"></div></div>
+    </div>
+    <div class="misses" id="misses"></div>
+  </div>
+  <button class="bigbtn" id="againBtn">▶ เล่นอีกครั้ง</button>
+  <button class="bigbtn alt" id="retryBtn" hidden>🔁 ทบทวนเฉพาะที่ผิด</button>
+  <button class="bigbtn alt" id="menuBtn">🏠 หน้าแรก</button>
+  <div class="spacer"></div>
+  <a class="hublink" href="../">← All games</a>
+</section>
+
+<div id="fx"></div>
+
+<script>
+/* ============ data: 44 Thai consonants, ก to ฮ ============
+   [ letter, Thai name, romanisation, emoji, class ]  class: h = สูง, m = กลาง, l = ต่ำ */
+const LETTERS=[
+ ["ก","ก ไก่","ko kai","🐔","m"],        ["ข","ข ไข่","kho khai","🥚","h"],
+ ["ฃ","ฃ ขวด","kho khuat","🍾","h"],     ["ค","ค ควาย","kho khwai","🐃","l"],
+ ["ฅ","ฅ คน","kho khon","🧍","l"],       ["ฆ","ฆ ระฆัง","kho ra-khang","🔔","l"],
+ ["ง","ง งู","ngo ngu","🐍","l"],        ["จ","จ จาน","cho chan","🍽️","m"],
+ ["ฉ","ฉ ฉิ่ง","cho ching","🎶","h"],    ["ช","ช ช้าง","cho chang","🐘","l"],
+ ["ซ","ซ โซ่","so so","⛓️","l"],         ["ฌ","ฌ เฌอ","cho choe","🌳","l"],
+ ["ญ","ญ หญิง","yo ying","👩","l"],      ["ฎ","ฎ ชฎา","do cha-da","👑","m"],
+ ["ฏ","ฏ ปฏัก","to pa-tak","🔱","m"],    ["ฐ","ฐ ฐาน","tho than","🏛️","h"],
+ ["ฑ","ฑ มณโฑ","tho montho","👸","l"],   ["ฒ","ฒ ผู้เฒ่า","tho phu-thao","👴","l"],
+ ["ณ","ณ เณร","no nen","🧘","l"],        ["ด","ด เด็ก","do dek","🧒","m"],
+ ["ต","ต เต่า","to tao","🐢","m"],       ["ถ","ถ ถุง","tho thung","👜","h"],
+ ["ท","ท ทหาร","tho thahan","💂","l"],   ["ธ","ธ ธง","tho thong","🚩","l"],
+ ["น","น หนู","no nu","🐭","l"],         ["บ","บ ใบไม้","bo baimai","🍃","m"],
+ ["ป","ป ปลา","po pla","🐟","m"],        ["ผ","ผ ผึ้ง","pho phueng","🐝","h"],
+ ["ฝ","ฝ ฝา","fo fa","🏺","h"],          ["พ","พ พาน","pho phan","🏆","l"],
+ ["ฟ","ฟ ฟัน","fo fan","🦷","l"],        ["ภ","ภ สำเภา","pho samphao","⛵","l"],
+ ["ม","ม ม้า","mo ma","🐴","l"],         ["ย","ย ยักษ์","yo yak","👹","l"],
+ ["ร","ร เรือ","ro ruea","🚣","l"],      ["ล","ล ลิง","lo ling","🐒","l"],
+ ["ว","ว แหวน","wo waen","💍","l"],      ["ศ","ศ ศาลา","so sala","🏯","h"],
+ ["ษ","ษ ฤๅษี","so rue-si","🧙","h"],    ["ส","ส เสือ","so suea","🐯","h"],
+ ["ห","ห หีบ","ho hip","🧰","h"],        ["ฬ","ฬ จุฬา","lo chula","🪁","l"],
+ ["อ","อ อ่าง","o ang","🛁","m"],        ["ฮ","ฮ นกฮูก","ho nok-huk","🦉","l"]
+];
+const CLS={h:{th:"อักษรสูง",icon:"▲",col:"#e33a70"},m:{th:"อักษรกลาง",icon:"●",col:"#ef8f09"},l:{th:"อักษรต่ำ",icon:"▼",col:"#3468e2"}};
+const CONF=["#ffd34e","#ff5f8f","#4f8cff","#7dffb0","#c08cff"];
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+
+/* ============ sound: everything is synthesised, nothing to download ============ */
+let AC=null,musG=null,sfxG=null,musTimer=null,musStep=0,musNext=0;
+let soundOn=localStorage.getItem("tts_sound")!=="0",musicOn=localStorage.getItem("tts_music")!=="0",musicWanted=false;
+function ac(){
+  if(!AC){
+    const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;
+    AC=new C();
+    const master=AC.createGain();master.gain.value=.9;master.connect(AC.destination);
+    musG=AC.createGain();musG.gain.value=0;musG.connect(master);
+    sfxG=AC.createGain();sfxG.gain.value=.9;sfxG.connect(master);
+  }
+  if(AC.state==="suspended")AC.resume();
+  return AC;
+}
+const NOTE=n=>440*Math.pow(2,(n-69)/12);
+function tone(freq,t,dur,type,peak,dest){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.02);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g);g.connect(dest||sfxG);o.start(t);o.stop(t+dur+.05);
+}
+function sfx(kind){
+  if(!soundOn||!ac())return;const t=AC.currentTime;
+  if(kind==="pick")tone(NOTE(79),t,.13,"sine",.22);
+  else if(kind==="drop"){tone(NOTE(69),t,.12,"triangle",.26);tone(NOTE(76),t+.05,.18,"sine",.16)}
+  else if(kind==="back")tone(NOTE(62),t,.2,"sine",.2);
+  else if(kind==="good")[72,76,79].forEach((n,i)=>tone(NOTE(n),t+i*.07,.3,"sine",.2));
+  else if(kind==="bad"){
+    const o=AC.createOscillator(),g=AC.createGain();o.type="sawtooth";
+    o.frequency.setValueAtTime(210,t);o.frequency.exponentialRampToValueAtTime(85,t+.3);
+    g.gain.setValueAtTime(.14,t);g.gain.exponentialRampToValueAtTime(.0001,t+.32);
+    o.connect(g);g.connect(sfxG);o.start(t);o.stop(t+.35);
+  }
+  else if(kind==="win")[72,76,79,84,88,91].forEach((n,i)=>tone(NOTE(n),t+i*.1,.55,"triangle",.22));
+}
+/* a calm four-bar loop: I - vi - IV - V with a soft pad, a bass and a pentatonic pluck */
+const CHORDS=[[48,[60,64,67,72]],[45,[57,60,64,69]],[53,[53,60,65,69]],[55,[55,59,62,67]]];
+const BEAT=.44;
+function musicTick(){
+  if(!AC)return;
+  while(musNext<AC.currentTime+.4){
+    const bar=Math.floor(musStep/8)%4,step=musStep%8,ch=CHORDS[bar];
+    if(step===0){tone(NOTE(ch[0]),musNext,BEAT*7,"triangle",.09,musG);tone(NOTE(ch[0]+12),musNext,BEAT*7,"sine",.05,musG)}
+    if(step===4)tone(NOTE(ch[0]+7),musNext,BEAT*2.4,"triangle",.06,musG);
+    tone(NOTE(ch[1][(step*3)%4]+(step===6?12:0)),musNext,.55,"sine",.075,musG);
+    musNext+=BEAT;musStep++;
+  }
+}
+function applyMusic(){
+  if(!AC)return;
+  musG.gain.cancelScheduledValues(AC.currentTime);
+  musG.gain.linearRampToValueAtTime(musicOn&&musicWanted?.5:0,AC.currentTime+.7);
+}
+function musicPlay(){musicWanted=true;if(!ac())return;if(!musTimer){musNext=AC.currentTime+.15;musStep=0;musTimer=setInterval(musicTick,70)}applyMusic()}
+function musicPause(){musicWanted=false;applyMusic()}
+
+/* speech reads the consonant name in Thai when a new card appears */
+let thVoice=null;
+function pickVoice(){try{thVoice=(speechSynthesis.getVoices()||[]).find(v=>/^th/i.test(v.lang))||null}catch(e){}}
+if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function speak(text){
+  if(!soundOn||!("speechSynthesis" in window))return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang="th-TH";if(thVoice)u.voice=thVoice;u.rate=.85;u.pitch=1.05;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function buzz(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
+
+/* ============ game state ============ */
+const game={left:[],answers:[],total:0,hints:3,hintsUsed:0,active:false,mode:"all"};
+let best=+(localStorage.getItem("tts_best")||0);
+const cur=()=>game.left[0];
+
+function newGame(pool,mode){
+  if(mode)game.mode=mode;
+  game.left=shuffle(pool);game.answers=[];game.total=pool.length;
+  game.hints=3;game.hintsUsed=0;game.active=true;
+  $("start").hidden=$("end").hidden=true;$("game").hidden=false;
+  $("totalN").textContent=game.total;
+  musicPlay();render(true);
+}
+function render(announce){
+  const c=cur();
+  $("card").hidden=!c;$("cHint").hidden=!c;$("checkBtn").hidden=!!c;
+  if(c){
+    $("cEmoji").textContent=c[3];$("cLetter").textContent=c[0];
+    $("cName").textContent=c[1];$("cRoman").textContent=c[2];
+    $("card").style.animation="none";void $("card").offsetWidth;$("card").style.animation="";
+    if(announce!==false)speak(c[1]);
+  }
+  for(const k of["h","m","l"]){
+    const box=$("ch"+k.toUpperCase()),list=game.answers.filter(a=>a.cls===k);
+    $("n"+k.toUpperCase()).textContent=list.length;
+    box.innerHTML=list.map(a=>`<span class="lt" data-take="${a.it[0]}">${a.it[0]}</span>`).join("");
+  }
+  const done=game.answers.length,pct=Math.round(done/game.total*100);
+  $("doneN").textContent=done;$("pfill").style.width=pct+"%";$("pctLbl").textContent=pct+"%";
+  $("leftLbl").textContent=game.left.length?"เหลืออีก "+game.left.length+" ตัว":"ใส่ครบแล้ว! ตรวจได้เลย";
+  $("undoBtn").disabled=!game.answers.length;
+  $("hintBtn").disabled=!game.hints||!c;
+  $("hintBtn").textContent="💡 คำใบ้ ("+game.hints+")";
+}
+function place(cls){
+  const c=cur();if(!c)return;
+  game.left.shift();game.answers.push({it:c,cls});
+  sfx("drop");buzz(15);render();
+  if(!game.left.length){sfx("good");speak("ใส่ครบแล้ว กดตรวจคำตอบ")}
+}
+function unplace(ch){
+  const i=game.answers.findIndex(a=>a.it[0]===ch);if(i<0)return;
+  const a=game.answers.splice(i,1)[0];
+  game.left.unshift(a.it);sfx("back");render();
+}
+function undo(){
+  if(!game.answers.length)return;
+  const a=game.answers.pop();game.left.unshift(a.it);sfx("back");render();
+}
+function useHint(){
+  const c=cur();if(!c||!game.hints)return;
+  game.hints--;game.hintsUsed++;
+  const box=document.querySelector('.box[data-cls="'+c[4]+'"]');
+  box.classList.add("hintflash");setTimeout(()=>box.classList.remove("hintflash"),1600);
+  sfx("good");speak(CLS[c[4]].th);render(false);
+}
+
+/* ---- drag the card onto a box, or just tap a box ---- */
+let drag=null;
+const card=$("card");
+card.addEventListener("pointerdown",e=>{
+  if(!cur())return;
+  drag={x:e.clientX,y:e.clientY,moved:false};
+  card.setPointerCapture(e.pointerId);
+  sfx("pick");
+});
+card.addEventListener("pointermove",e=>{
+  if(!drag)return;
+  const dx=e.clientX-drag.x,dy=e.clientY-drag.y;
+  if(!drag.moved&&Math.abs(dx)+Math.abs(dy)<7)return;
+  drag.moved=true;card.classList.add("dragging");
+  card.style.transform="translate("+dx+"px,"+dy+"px) rotate("+(dx*.04)+"deg) scale(.9)";
+  const over=document.elementFromPoint(e.clientX,e.clientY);
+  const box=over&&over.closest?over.closest(".box"):null;
+  document.querySelectorAll(".box").forEach(b=>b.classList.toggle("hot",b===box));
+});
+function endDrag(e){
+  if(!drag)return;
+  const moved=drag.moved;drag=null;
+  card.classList.remove("dragging");card.style.transform="";
+  document.querySelectorAll(".box").forEach(b=>b.classList.remove("hot"));
+  if(!moved)return;
+  const over=document.elementFromPoint(e.clientX,e.clientY);
+  const box=over&&over.closest?over.closest(".box"):null;
+  if(box)place(box.dataset.cls);else sfx("back");
+}
+card.addEventListener("pointerup",endDrag);
+card.addEventListener("pointercancel",()=>{if(drag){drag=null;card.classList.remove("dragging");card.style.transform="";
+  document.querySelectorAll(".box").forEach(b=>b.classList.remove("hot"))}});
+document.querySelectorAll(".box").forEach(b=>b.addEventListener("click",e=>{
+  const chip=e.target.closest("[data-take]");
+  if(chip){unplace(chip.dataset.take);return}
+  place(b.dataset.cls);
+}));
+
+/* ============ marking happens only once every letter is in a box ============ */
+function check(){
+  if(game.left.length)return;
+  game.active=false;musicPause();
+  const ok=game.answers.filter(a=>a.it[4]===a.cls),bad=game.answers.filter(a=>a.it[4]!==a.cls);
+  const pct=Math.round(ok.length/game.total*100),stars=pct>=95?3:pct>=80?2:pct>=55?1:0;
+  if(pct>best){best=pct;localStorage.setItem("tts_best",best)}
+  $("game").hidden=true;$("end").hidden=false;$("end").scrollTop=0;
+  $("medal").textContent=stars===3?"🏆":stars===2?"🎉":stars===1?"🌟":"📖";
+  $("endTitle").textContent=stars===3?"สุดยอด! เก่งมาก":stars===2?"ทำได้ดีมาก!":stars===1?"เกือบแล้ว สู้ต่อ!":"ลองอีกครั้งนะ";
+  $("endScore").textContent=pct+"%";
+  $("endStars").textContent="⭐".repeat(stars)+"☆".repeat(3-stars);
+  $("rOk").textContent=ok.length+" / "+game.total;
+  $("rNo").textContent=bad.length;
+  $("rHint").textContent=game.hintsUsed;
+  $("rBest").textContent=best+"%";
+  for(const k of["h","m","l"]){
+    $("rv"+k.toUpperCase()).innerHTML=game.answers.filter(a=>a.cls===k)
+      .map(a=>`<span class="lt ${a.it[4]===k?"ok":"no"}">${a.it[0]}</span>`).join("")||'<span style="font-size:12px;opacity:.8">ว่าง</span>';
+  }
+  $("misses").innerHTML=bad.length
+    ? "<div style='border:0;font-weight:900;display:block'>ตัวที่ต้องทบทวน</div>"+bad.map(a=>
+        `<div><span class="lt">${a.it[0]}</span><span>${a.it[1]} เป็น <b style="color:${CLS[a.it[4]].col}">${CLS[a.it[4]].icon} ${CLS[a.it[4]].th}</b> <small>(ใส่ไว้ที่ ${CLS[a.cls].th})</small></span></div>`).join("")
+    : "<div style='border:0;justify-content:center;font-weight:900'>🎉 ถูกทุกตัวเลย!</div>";
+  $("retryBtn").hidden=!bad.length;
+  $("retryBtn").onclick=()=>newGame(bad.map(a=>a.it));
+  if(stars>=2){sfx("win");confetti()}else sfx("bad");
+  speak(pct===100?"ถูกทุกตัวเลย เก่งมาก":"ได้ "+ok.length+" จาก "+game.total+" ตัว");
+}
+$("checkBtn").onclick=check;
+
+/* ============ chrome ============ */
+function practicePool(){
+  const pick=(k,n)=>shuffle(LETTERS.filter(l=>l[4]===k)).slice(0,n);
+  return shuffle([...pick("m",4),...pick("h",4),...pick("l",7)]);
+}
+$("playAll").onclick=()=>{ac();newGame(LETTERS,"all")};
+$("playShort").onclick=()=>{ac();newGame(practicePool(),"short")};
+$("againBtn").onclick=()=>newGame(game.mode==="all"?LETTERS:practicePool());
+$("menuBtn").onclick=()=>{$("end").hidden=true;$("start").hidden=false;musicPause()};
+$("homeBtn").onclick=()=>{game.active=false;$("game").hidden=true;$("start").hidden=false;musicPause()};
+$("undoBtn").onclick=undo;
+$("hintBtn").onclick=useHint;
+$("tipBtn").onclick=()=>{const t=$("tipBox");t.hidden=!t.hidden;if(!t.hidden)t.scrollIntoView({behavior:"smooth",block:"nearest"})};
+$("soundBtn").onclick=()=>{
+  soundOn=!soundOn;localStorage.setItem("tts_sound",soundOn?"1":"0");
+  $("soundBtn").textContent=soundOn?"🔊":"🔇";$("soundBtn").classList.toggle("off",!soundOn);
+  if(!soundOn&&"speechSynthesis" in window)speechSynthesis.cancel();
+};
+$("musicBtn").onclick=()=>{
+  musicOn=!musicOn;localStorage.setItem("tts_music",musicOn?"1":"0");
+  $("musicBtn").classList.toggle("off",!musicOn);
+  if(musicOn)musicPlay();else applyMusic();
+};
+$("soundBtn").textContent=soundOn?"🔊":"🔇";
+$("soundBtn").classList.toggle("off",!soundOn);
+$("musicBtn").classList.toggle("off",!musicOn);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)musicPause();else if(game.active)musicPlay()});
+
+function confetti(){
+  for(let i=0;i<34;i++){
+    const e=document.createElement("i");e.className="conf";
+    e.style.background=CONF[i%CONF.length];e.style.left=(20+Math.random()*60)+"%";e.style.top="30%";
+    $("fx").appendChild(e);
+    e.animate([{transform:"translate(0,0) rotate(0)",opacity:1},
+      {transform:`translate(${(Math.random()-.5)*420}px,${140+Math.random()*300}px) rotate(560deg)`,opacity:0}],
+      {duration:950+Math.random()*550}).onfinish=()=>e.remove();
+  }
+}
+</script>
+</body>
+</html>
