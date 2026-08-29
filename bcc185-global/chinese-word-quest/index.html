@@ -47,7 +47,7 @@ h1{margin:0;font-size:clamp(32px,9vw,54px);line-height:1.1;
 .subtitle{margin:0;color:#fff;font-weight:800;font-size:clamp(14px,3.6vw,19px);opacity:.96}
 .panel{width:min(94vw,420px);background:#fffffff2;border-radius:26px;padding:14px 18px;box-shadow:0 8px 0 #2a166b3d;text-align:left}
 .tip{font-size:14px;line-height:1.6;font-weight:700}
-.tip .row{padding:7px 0;border-bottom:1px dashed #e2dcf0;display:flex;gap:8px;align-items:flex-start}
+.tip .row{padding:7px 0;border-bottom:1px dashed #e2dcf0;display:flex;justify-content:flex-start;gap:8px;align-items:flex-start}
 .tip .row:last-child{border:0}
 .bigbtn{border:0;border-radius:26px;padding:15px 30px;font-size:21px;font-weight:900;cursor:pointer;width:min(94vw,420px);
   background:linear-gradient(160deg,#ffe27a,var(--gold));color:#5c3b00;box-shadow:0 7px 0 var(--gold-d)}
@@ -104,7 +104,7 @@ h1{margin:0;font-size:clamp(32px,9vw,54px);line-height:1.1;
 .review h3{margin:2px 0 8px;font-size:16px;text-align:center}
 .misses{max-height:30vh;overflow-y:auto;font-size:14px;font-weight:750;line-height:1.5}
 .misses div{padding:5px 2px;border-bottom:1px dashed #e2dcf0;display:flex;align-items:center;gap:9px}
-.misses .mhz{width:38px;height:38px;font-size:20px;background:#ffdede;color:#b31f3d;flex:none;border-radius:12px;
+.misses .mhz{min-width:38px;height:38px;padding:0 6px;font-size:20px;white-space:nowrap;background:#ffdede;color:#b31f3d;flex:none;border-radius:12px;
   display:flex;align-items:center;justify-content:center;font-weight:900}
 .float{position:fixed;z-index:10;font-size:30px;font-weight:950;pointer-events:none;text-shadow:0 3px #0005}
 .conf{position:fixed;z-index:10;width:11px;height:11px;border-radius:3px;pointer-events:none}
