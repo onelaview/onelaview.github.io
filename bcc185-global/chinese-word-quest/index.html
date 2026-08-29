@@ -200,17 +200,17 @@ const VOCAB=[
  ["米饭","mǐfàn","ข้าวสวย","🍚","w"],
  ["面条","miàntiáo","บะหมี่","🍜","w"],
  ["奶奶","nǎinai","คุณยาย","👵","w"],
- ["零","líng","ศูนย์ (0)","0️⃣","n"],
- ["一","yī","หนึ่ง (1)","1️⃣","n"],
- ["二","èr","สอง (2)","2️⃣","n"],
- ["三","sān","สาม (3)","3️⃣","n"],
- ["四","sì","สี่ (4)","4️⃣","n"],
- ["五","wǔ","ห้า (5)","5️⃣","n"],
- ["六","liù","หก (6)","6️⃣","n"],
- ["七","qī","เจ็ด (7)","7️⃣","n"],
- ["八","bā","แปด (8)","8️⃣","n"],
- ["九","jiǔ","เก้า (9)","9️⃣","n"],
- ["十","shí","สิบ (10)","🔟","n"]
+ ["零","líng","ศูนย์","0️⃣","n"],
+ ["一","yī","หนึ่ง","1️⃣","n"],
+ ["二","èr","สอง","2️⃣","n"],
+ ["三","sān","สาม","3️⃣","n"],
+ ["四","sì","สี่","4️⃣","n"],
+ ["五","wǔ","ห้า","5️⃣","n"],
+ ["六","liù","หก","6️⃣","n"],
+ ["七","qī","เจ็ด","7️⃣","n"],
+ ["八","bā","แปด","8️⃣","n"],
+ ["九","jiǔ","เก้า","9️⃣","n"],
+ ["十","shí","สิบ","🔟","n"]
 ];
 const ROUNDS=20;
 const $=id=>document.getElementById(id);
@@ -351,8 +351,7 @@ function pick(i,btn){
     if(!q.missed)game.correct++;
     game.log.push({item:q.item,missed:q.missed});
     sfx("good");buzz(15);burst(btn,["⭐","🎉","✨","👏"][Math.floor(Math.random()*4)]);
-    setTimeout(()=>speak(q.item[0],"zh-CN",zhVoice,.8),250);
-    setTimeout(nextOrFinish,1300);
+    setTimeout(()=>speakHanziThenAdvance(q.item[0]),250);
   }else{
     q.missed=true;
     btn.classList.add("bad");btn.disabled=true;
@@ -362,6 +361,24 @@ function pick(i,btn){
 function nextOrFinish(){
   game.idx++;
   if(game.idx>=game.pool.length)finish();else renderQuestion();
+}
+/* speaks the hanzi as reinforcement and waits for it to actually finish (or a
+   fallback timer, in case speech synthesis stalls) before moving on — advancing
+   on a fixed delay was cutting the reinforcement speech off mid-word */
+function speakHanziThenAdvance(hanzi){
+  const PAUSE=350,MIN_WAIT=900,FALLBACK=2200;
+  let done=false;
+  const go=()=>{if(done)return;done=true;clearTimeout(fallback);nextOrFinish()};
+  const fallback=setTimeout(go,FALLBACK);
+  if(!soundOn||!("speechSynthesis" in window)){setTimeout(go,MIN_WAIT);return}
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(hanzi);
+    u.lang="zh-CN";if(zhVoice)u.voice=zhVoice;u.rate=.8;u.pitch=1.05;
+    u.onend=()=>setTimeout(go,PAUSE);
+    u.onerror=()=>setTimeout(go,MIN_WAIT);
+    speechSynthesis.speak(u);
+  }catch(e){setTimeout(go,MIN_WAIT)}
 }
 function burst(anchor,emoji){
   const r=anchor.getBoundingClientRect();
