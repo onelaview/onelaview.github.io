@@ -1,0 +1,398 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#5b3fd6">
+<title>จับคู่ทรัพยากร · Resource Match</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🧩</text></svg>">
+<style>
+:root{
+  --ink:#2b2140;--paper:#fffaf3;--safe:env(safe-area-inset-bottom,0px);--top:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{height:100%}
+body{margin:0;overflow:hidden;color:var(--ink);
+  font-family:"Baloo 2","Noto Sans Thai","Sarabun","Leelawadee UI","Thonburi","Comic Sans MS",system-ui,sans-serif;
+  background:linear-gradient(160deg,#6a4cff 0%,#8a5cf0 45%,#00c9c9 100%)}
+button,a{font:inherit}
+
+#bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+#bg span{position:absolute;color:#fff;opacity:.16;font-size:clamp(46px,13vw,110px);animation:float 16s ease-in-out infinite}
+#bg span:nth-child(1){left:-2%;top:6%}
+#bg span:nth-child(2){right:2%;top:20%;animation-delay:-4s}
+#bg span:nth-child(3){left:6%;bottom:12%;animation-delay:-8s}
+#bg span:nth-child(4){right:8%;bottom:4%;animation-delay:-12s}
+#bg span:nth-child(5){left:44%;top:44%;animation-delay:-6s}
+@keyframes float{50%{transform:translateY(-30px) rotate(10deg)}}
+
+.overlay{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  text-align:center;gap:12px;padding:calc(var(--top) + 18px) 16px calc(var(--safe) + 24px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.overlay[hidden],#game[hidden],[hidden]{display:none!important}
+.overlay>*{flex:none}
+.spacer{flex:1 1 auto;min-height:0}
+h1{margin:0;color:#fff;font-size:clamp(30px,8.5vw,50px);line-height:1.05;text-shadow:0 5px 0 #3a1f8c66}
+.subtitle{margin:0;color:#fff;font-weight:800;font-size:clamp(14px,3.8vw,19px);opacity:.95}
+.mascot{font-size:clamp(48px,14vw,78px);line-height:1;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-9px) rotate(4deg)}}
+.panel{width:min(94vw,420px);background:#fffffff2;border-radius:26px;padding:14px 18px;box-shadow:0 8px 0 #2a166b3d;text-align:left}
+.bigbtn{border:0;border-radius:26px;padding:15px 30px;background:#ffd34e;color:var(--ink);font-size:21px;font-weight:900;
+  box-shadow:0 7px 0 #c99b11;cursor:pointer;width:min(94vw,420px)}
+.bigbtn:active{transform:translateY(4px);box-shadow:0 3px 0 #c99b11}
+.bigbtn.alt{background:#fff;box-shadow:0 7px 0 #2a166b55}
+.bigbtn small{display:block;font-size:13px;font-weight:800;opacity:.7}
+.hublink{color:#fff;font-weight:850;text-decoration:none;padding:6px}
+.tipbtn{border:0;background:#ffffff33;color:#fff;font-weight:900;border-radius:20px;padding:9px 18px;cursor:pointer;backdrop-filter:blur(3px)}
+.tip{font-size:14px;line-height:1.6;font-weight:700}
+.tip .row{padding:7px 0;border-bottom:1px dashed #d9d2ea}
+.tip .row:last-child{border:0}
+.bestline{color:#fff;font-weight:850;font-size:13px;opacity:.9}
+
+/* ---------- game screen ---------- */
+#game{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:7px;
+  padding:calc(var(--top) + 7px) 10px calc(var(--safe) + 8px)}
+#game>*{width:100%;max-width:620px;flex:none}
+#game>.board{flex:1 1 auto;min-height:0}
+.top{display:flex;align-items:center;justify-content:space-between;gap:7px}
+.iconbtn{border:0;background:#fff;color:var(--ink);width:42px;height:42px;border-radius:15px;box-shadow:0 4px 0 #2a166b55;font-size:18px;font-weight:900;cursor:pointer}
+.iconbtn:active{transform:translateY(2px);box-shadow:0 2px 0 #2a166b55}
+.iconbtn.off{opacity:.45}
+.iconbtn:disabled{opacity:.35}
+.chip{background:#fff;border-radius:15px;box-shadow:0 4px 0 #2a166b55;padding:8px 14px;font-weight:900;font-size:15px}
+.meta{display:flex;justify-content:space-between;color:#fff;font-size:13px;font-weight:900;text-shadow:0 2px #2a166b55;padding:0 3px}
+.tools{display:grid;grid-template-columns:1fr;gap:8px}
+.tool{border:0;border-radius:18px;padding:9px 4px;background:#ffffffe6;color:var(--ink);font-weight:900;font-size:15px;
+  box-shadow:0 4px 0 #2a166b55;cursor:pointer}
+.tool:active{transform:translateY(2px);box-shadow:0 2px 0 #2a166b55}
+.tool:disabled{opacity:.45;box-shadow:0 4px 0 #2a166b33}
+
+/* the flip board */
+.board{display:grid;gap:7px;grid-auto-rows:1fr;position:relative}
+.card{perspective:600px;cursor:pointer}
+.card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .35s}
+.card.flipped .card-inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:16px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:2px;overflow:hidden}
+.face.front{background:linear-gradient(160deg,#8a5cf0,#5b3fd6);box-shadow:0 5px 0 #3a1f8c,inset 0 0 0 3px #ffffff40}
+.face.front i{font-size:clamp(20px,6.5vw,32px);color:#ffffffb0}
+.face.back{transform:rotateY(180deg);background:var(--paper);box-shadow:0 5px 0 #d8cdb0,inset 0 0 0 3px #fff}
+.face.back .fe{font-size:clamp(20px,6.4vw,32px);line-height:1}
+.face.back .fn{font-size:clamp(8.5px,2.4vw,11.5px);font-weight:900;line-height:1.1;text-align:center;padding:0 2px}
+.card.matched .face.back{background:linear-gradient(160deg,#daffe6,#a4f3bc);box-shadow:0 5px 0 #4bc47d,inset 0 0 0 3px #fff}
+.card.matched{cursor:default}
+.card.wrong .face.back{animation:shake .4s}
+@keyframes shake{20%,60%{transform:translateX(-4px) rotateY(180deg)}40%,80%{transform:translateX(4px) rotateY(180deg)}}
+.card.hintflash .face.front{animation:flash .5s 2}
+@keyframes flash{50%{filter:brightness(1.5)}}
+
+.toast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.85);z-index:6;
+  background:#fffffff5;border-radius:22px;padding:12px 18px;box-shadow:0 10px 0 #2a166b45;
+  font-weight:900;font-size:14px;text-align:center;line-height:1.5;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:88%}
+.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.toast .tt{font-size:26px;margin-bottom:2px}
+.toast .rw{display:inline-block;margin-top:4px;padding:3px 10px;border-radius:12px;font-size:12px;font-weight:900}
+.toast .rw.yes{background:#d9ffe4;color:#12703f}
+.toast .rw.no{background:#ffe3c2;color:#a2570a}
+
+/* ---------- results ---------- */
+.scorebig{font-size:58px;font-weight:950;color:#3b2a86;line-height:1}
+.stars{font-size:27px;letter-spacing:2px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-weight:800;font-size:15px;border-bottom:1px dashed #e2dcf0}
+.row:last-child{border:0}
+.review{width:min(94vw,420px);background:#fffffff2;border-radius:26px;padding:12px;box-shadow:0 8px 0 #2a166b3d;text-align:left}
+.review h3{margin:2px 0 8px;font-size:16px;text-align:center}
+.pairlist{display:flex;flex-direction:column;gap:6px;max-height:34vh;overflow-y:auto}
+.pairlist .pr{display:flex;align-items:center;gap:8px;background:#f6f3ff;border-radius:14px;padding:6px 10px}
+.pairlist .pe{font-size:22px}
+.pairlist .pn{flex:1;font-size:13px;font-weight:800;line-height:1.3}
+.pairlist .arrow{opacity:.5;font-weight:900}
+.pairlist .tag{font-size:11px;font-weight:900;border-radius:10px;padding:3px 8px;flex:none}
+.tag.yes{background:#d9ffe4;color:#12703f}
+.tag.no{background:#ffe3c2;color:#a2570a}
+.conf{position:fixed;z-index:10;width:11px;height:11px;border-radius:3px;pointer-events:none}
+@media(max-height:680px){
+  #game{gap:5px}.iconbtn{width:37px;height:37px;font-size:16px}.chip{padding:6px 11px;font-size:14px}
+  .tool{padding:7px 3px;font-size:14px}
+}
+</style>
+</head>
+<body>
+<div id="bg"><span>🌳</span><span>🌾</span><span>🐝</span><span>⛏️</span><span>🧩</span></div>
+
+<!-- ======= START ======= -->
+<section class="overlay" id="start">
+  <div class="mascot">🌿🧩</div>
+  <h1>จับคู่ทรัพยากร!</h1>
+  <p class="subtitle">ทรัพยากรธรรมชาติ ➜ ของที่ทำจากมัน — วิชาสังคมศึกษา ป.1</p>
+  <button class="bigbtn" id="playShort">▶ เล่น 6 คู่<small>เปิดไพ่หาคู่ที่สัมพันธ์กัน</small></button>
+  <button class="bigbtn alt" id="playFull">🧠 ท้าทาย! ครบ 10 คู่<small>สำหรับคนที่เก่งแล้ว</small></button>
+  <p class="bestline" id="bestLine"></p>
+  <button class="tipbtn" id="tipBtn">📖 วิธีเล่น</button>
+  <div class="panel tip" id="tipBox" hidden>
+    <div class="row">🎯 แตะไพ่ 2 ใบเพื่อเปิด ถ้าเป็นคู่ที่สัมพันธ์กันจะติดไว้</div>
+    <div class="row">🌳➜📄 เช่น "ต้นไม้" คู่กับ "กระดาษ" ที่ทำจากไม้</div>
+    <div class="row">🔄 ทรัพยากรบางอย่างปลูกทดแทนได้ บางอย่างใช้แล้วหมดไป</div>
+    <div class="row">💡 ใบ้ได้ถ้าติดขัด แต่ยิ่งใบ้น้อย ดาวยิ่งเยอะ</div>
+  </div>
+  <div class="spacer"></div>
+  <a class="hublink" href="../">← All games</a>
+</section>
+
+<!-- ======= GAME ======= -->
+<main id="game" hidden>
+  <div class="top">
+    <button class="iconbtn" id="homeBtn" aria-label="เลือกโหมดอื่น">⬅</button>
+    <div class="chip">🧩 <span id="doneN">0</span>/<span id="totalN">0</span></div>
+    <button class="iconbtn" id="soundBtn" aria-label="เสียง">🔊</button>
+  </div>
+  <div class="meta"><span id="triesLbl">ลองไป 0 ครั้ง</span><span id="pctLbl">0%</span></div>
+  <div class="board" id="board"></div>
+  <div class="tools">
+    <button class="tool" id="hintBtn">💡 ใบ้ (2)</button>
+  </div>
+</main>
+
+<!-- ======= RESULTS ======= -->
+<section class="overlay" id="end" hidden>
+  <div class="mascot" id="medal">🏆</div>
+  <h1 id="endTitle">เก่งมาก!</h1>
+  <div class="panel" style="text-align:center">
+    <div class="scorebig" id="endScore">0%</div>
+    <div class="stars" id="endStars">⭐⭐⭐</div>
+    <div class="row"><span>🧩 คู่ทั้งหมด</span><b id="rPairs">0</b></div>
+    <div class="row"><span>🔁 ลองไป</span><b id="rTries">0</b></div>
+    <div class="row"><span>💡 ใช้คำใบ้</span><b id="rHint">0</b></div>
+    <div class="row"><span>🏅 สถิติสูงสุดโหมดนี้</span><b id="rBest">0%</b></div>
+  </div>
+  <div class="review">
+    <h3>ทบทวนคู่ที่จับได้</h3>
+    <div class="pairlist" id="pairlist"></div>
+  </div>
+  <button class="bigbtn" id="againBtn">▶ เล่นโหมดนี้อีกครั้ง</button>
+  <button class="bigbtn alt" id="menuBtn">🏠 เลือกโหมดอื่น</button>
+  <div class="spacer"></div>
+  <a class="hublink" href="../">← All games</a>
+</section>
+
+<div id="fx"></div>
+
+<script>
+/* ============ data: ทรัพยากรธรรมชาติ ➜ ผลผลิต ============
+   renewable: true = ปลูก/เลี้ยงทดแทนได้, false = ใช้แล้วหมดไป (แร่ธาตุ/เชื้อเพลิง) */
+const PAIRS=[
+  {id:1, res:["ต้นไม้","🌳"], prod:["กระดาษ","📄"], renewable:true},
+  {id:2, res:["นาข้าว","🌾"], prod:["ข้าวสวย","🍚"], renewable:true},
+  {id:3, res:["วัวนม","🐄"], prod:["นม","🥛"], renewable:true},
+  {id:4, res:["แกะ","🐑"], prod:["เสื้อกันหนาว","🧥"], renewable:true},
+  {id:5, res:["ผึ้ง","🐝"], prod:["น้ำผึ้ง","🍯"], renewable:true},
+  {id:6, res:["ไก่","🐔"], prod:["ไข่","🥚"], renewable:true},
+  {id:7, res:["ต้นยางพารา","🌴"], prod:["ยางรถยนต์","🛞"], renewable:true},
+  {id:8, res:["แร่เหล็ก","⛏️"], prod:["กรรไกร","✂️"], renewable:false},
+  {id:9, res:["บ่อน้ำมัน","🛢️"], prod:["น้ำมันเชื้อเพลิง","⛽"], renewable:false},
+  {id:10,res:["หิน","🪨"], prod:["ถนน","🛣️"], renewable:false},
+];
+const CONF=["#ffd34e","#ff5f8f","#4f8cff","#7dffb0","#c08cff"];
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+
+/* ============ sound: short synthesised sfx, nothing to download ============ */
+let AC=null,sfxG=null;
+let soundOn=localStorage.getItem("rm_sound")!=="0";
+function ac(){
+  if(!AC){
+    const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;
+    AC=new C();
+    const master=AC.createGain();master.gain.value=.9;master.connect(AC.destination);
+    sfxG=AC.createGain();sfxG.gain.value=.9;sfxG.connect(master);
+  }
+  if(AC.state==="suspended")AC.resume();
+  return AC;
+}
+const NOTE=n=>440*Math.pow(2,(n-69)/12);
+function tone(freq,t,dur,type,peak){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.02);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g);g.connect(sfxG);o.start(t);o.stop(t+dur+.05);
+}
+function sfx(kind){
+  if(!soundOn||!ac())return;const t=AC.currentTime;
+  if(kind==="flip")tone(NOTE(74),t,.1,"sine",.2);
+  else if(kind==="good")[72,76,79].forEach((n,i)=>tone(NOTE(n),t+i*.07,.3,"sine",.2));
+  else if(kind==="bad"){
+    const o=AC.createOscillator(),g=AC.createGain();o.type="sawtooth";
+    o.frequency.setValueAtTime(210,t);o.frequency.exponentialRampToValueAtTime(85,t+.3);
+    g.gain.setValueAtTime(.14,t);g.gain.exponentialRampToValueAtTime(.0001,t+.32);
+    o.connect(g);g.connect(sfxG);o.start(t);o.stop(t+.35);
+  }
+  else if(kind==="win")[72,76,79,84,88,91].forEach((n,i)=>tone(NOTE(n),t+i*.1,.55,"triangle",.22));
+}
+let thVoice=null;
+function pickVoice(){try{thVoice=(speechSynthesis.getVoices()||[]).find(v=>/^th/i.test(v.lang))||null}catch(e){}}
+if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function speak(text){
+  if(!soundOn||!("speechSynthesis" in window))return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);
+    u.lang="th-TH";if(thVoice)u.voice=thVoice;u.rate=.85;u.pitch=1.05;speechSynthesis.speak(u);}catch(e){}
+}
+function buzz(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
+
+/* ============ game state ============ */
+const game={mode:"short",cards:[],pairsTotal:0,matched:0,tries:0,hints:2,hintsUsed:0,flipped:[],locked:false,active:false};
+
+function bestFor(mode){return +(localStorage.getItem("rm_best_"+mode)||0)}
+function showBest(){
+  const s=bestFor("short"),f=bestFor("full");
+  $("bestLine").textContent=(s||f)?`🏅 สถิติ: 6 คู่ ${s||0}%   ·   10 คู่ ${f||0}%`:"";
+}
+showBest();
+
+function buildCards(mode){
+  const n=mode==="full"?10:6;
+  const chosen=shuffle(PAIRS).slice(0,n);
+  const cards=[];
+  chosen.forEach(p=>{
+    cards.push({pairId:p.id,role:"res",name:p.res[0],emoji:p.res[1],matched:false});
+    cards.push({pairId:p.id,role:"prod",name:p.prod[0],emoji:p.prod[1],matched:false});
+  });
+  return {cards:shuffle(cards),pairsTotal:chosen.length};
+}
+
+function newGame(mode){
+  game.mode=mode;
+  const built=buildCards(mode);
+  game.cards=built.cards;game.pairsTotal=built.pairsTotal;
+  game.matched=0;game.tries=0;game.hints=2;game.hintsUsed=0;game.flipped=[];game.locked=false;game.active=true;
+  $("start").hidden=$("end").hidden=true;$("game").hidden=false;
+  $("totalN").textContent=game.pairsTotal;
+  const cols=mode==="full"?4:3;
+  const board=$("board");
+  board.style.gridTemplateColumns="repeat("+cols+",1fr)";
+  board.innerHTML=game.cards.map((c,i)=>
+    `<div class="card" data-i="${i}">
+       <div class="card-inner">
+         <div class="face front"><i>❓</i></div>
+         <div class="face back"><span class="fe">${c.emoji}</span><span class="fn">${c.name}</span></div>
+       </div>
+     </div>`).join("");
+  board.querySelectorAll(".card").forEach(el=>el.addEventListener("click",()=>flip(+el.dataset.i)));
+  render();
+}
+function render(){
+  $("doneN").textContent=game.matched;
+  $("triesLbl").textContent="ลองไป "+game.tries+" ครั้ง";
+  const pct=game.tries?Math.min(100,Math.round(game.pairsTotal/game.tries*100)):100;
+  $("pctLbl").textContent=pct+"%";
+  $("hintBtn").disabled=!game.hints;
+  $("hintBtn").textContent="💡 ใบ้ ("+game.hints+")";
+}
+function cardEl(i){return $("board").children[i]}
+
+function flip(i){
+  if(game.locked||!game.active)return;
+  const c=game.cards[i];
+  if(c.matched||game.flipped.includes(i))return;
+  cardEl(i).classList.add("flipped");
+  sfx("flip");speak(c.name);
+  game.flipped.push(i);
+  if(game.flipped.length===2)checkPair();
+}
+function checkPair(){
+  game.locked=true;game.tries++;
+  const [a,b]=game.flipped,ca=game.cards[a],cb=game.cards[b];
+  if(ca.pairId===cb.pairId){
+    ca.matched=cb.matched=true;
+    cardEl(a).classList.add("matched");cardEl(b).classList.add("matched");
+    game.matched++;
+    sfx("good");buzz(15);
+    const pair=PAIRS.find(p=>p.id===ca.pairId);
+    showToast(pair);
+    game.flipped=[];game.locked=false;render();
+    if(game.matched===game.pairsTotal)setTimeout(finish,900);
+  }else{
+    sfx("bad");buzz([10,40,10]);
+    cardEl(a).classList.add("wrong");cardEl(b).classList.add("wrong");
+    setTimeout(()=>{
+      cardEl(a).classList.remove("flipped","wrong");cardEl(b).classList.remove("flipped","wrong");
+      game.flipped=[];game.locked=false;render();
+    },850);
+  }
+}
+let toastTimer=null;
+function showToast(pair){
+  const t=$("board").querySelector(".toast")||(()=>{const d=document.createElement("div");d.className="toast";$("board").appendChild(d);return d})();
+  t.innerHTML=`<div class="tt">${pair.res[1]} ➜ ${pair.prod[1]}</div>${pair.res[0]} ทำให้เกิด ${pair.prod[0]}
+    <div class="rw ${pair.renewable?"yes":"no"}">${pair.renewable?"🔄 ปลูก/เลี้ยงทดแทนได้":"⚠️ ใช้แล้วหมดไป"}</div>`;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove("show"),1500);
+}
+function useHint(){
+  if(!game.hints||game.locked)return;
+  const open=[...new Set(game.cards.filter(c=>!c.matched).map(c=>c.pairId))];
+  if(!open.length)return;
+  const pairId=open[Math.floor(Math.random()*open.length)];
+  const idxs=game.cards.map((c,i)=>c.pairId===pairId?i:-1).filter(i=>i>=0);
+  game.hints--;game.hintsUsed++;render();
+  idxs.forEach(i=>cardEl(i).classList.add("hintflash"));
+  sfx("good");
+  setTimeout(()=>idxs.forEach(i=>cardEl(i)&&cardEl(i).classList.remove("hintflash")),1100);
+}
+
+function finish(){
+  game.active=false;
+  const pct=game.tries?Math.min(100,Math.round(game.pairsTotal/game.tries*100)):100;
+  const stars=pct>=95?3:pct>=80?2:pct>=55?1:0;
+  const bestKey="rm_best_"+game.mode,best=Math.max(pct,+(localStorage.getItem(bestKey)||0));
+  localStorage.setItem(bestKey,best);
+  $("game").hidden=true;$("end").hidden=false;$("end").scrollTop=0;
+  $("medal").textContent=stars===3?"🏆":stars===2?"🎉":stars===1?"🌟":"📖";
+  $("endTitle").textContent=stars===3?"สุดยอด! เก่งมาก":stars===2?"ทำได้ดีมาก!":stars===1?"เกือบแล้ว สู้ต่อ!":"ลองอีกครั้งนะ";
+  $("endScore").textContent=pct+"%";
+  $("endStars").textContent="⭐".repeat(stars)+"☆".repeat(3-stars);
+  $("rPairs").textContent=game.pairsTotal;
+  $("rTries").textContent=game.tries;
+  $("rHint").textContent=game.hintsUsed;
+  $("rBest").textContent=best+"%";
+  const usedIds=[...new Set(game.cards.map(c=>c.pairId))];
+  $("pairlist").innerHTML=usedIds.map(id=>{
+    const p=PAIRS.find(x=>x.id===id);
+    return `<div class="pr"><span class="pe">${p.res[1]}</span><span class="pn">${p.res[0]}</span>
+      <span class="arrow">➜</span><span class="pe">${p.prod[1]}</span><span class="pn">${p.prod[0]}</span>
+      <span class="tag ${p.renewable?"yes":"no"}">${p.renewable?"🔄":"⚠️"}</span></div>`;
+  }).join("");
+  if(stars>=2){sfx("win");confetti()}
+  speak(pct===100?"จับคู่ครบทุกคู่เลย เก่งมาก":"จับคู่ครบแล้ว เก่งมาก");
+  showBest();
+}
+
+/* ============ chrome ============ */
+$("playShort").onclick=()=>{ac();newGame("short")};
+$("playFull").onclick=()=>{ac();newGame("full")};
+$("againBtn").onclick=()=>newGame(game.mode);
+$("menuBtn").onclick=()=>{$("end").hidden=true;$("start").hidden=false;showBest()};
+$("homeBtn").onclick=()=>{game.active=false;$("game").hidden=true;$("start").hidden=false;showBest()};
+$("hintBtn").onclick=useHint;
+$("tipBtn").onclick=()=>{const t=$("tipBox");t.hidden=!t.hidden;if(!t.hidden)t.scrollIntoView({behavior:"smooth",block:"nearest"})};
+$("soundBtn").onclick=()=>{
+  soundOn=!soundOn;localStorage.setItem("rm_sound",soundOn?"1":"0");
+  $("soundBtn").textContent=soundOn?"🔊":"🔇";$("soundBtn").classList.toggle("off",!soundOn);
+  if(!soundOn&&"speechSynthesis" in window)speechSynthesis.cancel();
+};
+$("soundBtn").textContent=soundOn?"🔊":"🔇";
+$("soundBtn").classList.toggle("off",!soundOn);
+
+function confetti(){
+  for(let i=0;i<34;i++){
+    const e=document.createElement("i");e.className="conf";
+    e.style.background=CONF[i%CONF.length];e.style.left=(20+Math.random()*60)+"%";e.style.top="30%";
+    $("fx").appendChild(e);
+    e.animate([{transform:"translate(0,0) rotate(0)",opacity:1},
+      {transform:`translate(${(Math.random()-.5)*420}px,${140+Math.random()*300}px) rotate(560deg)`,opacity:0}],
+      {duration:950+Math.random()*550}).onfinish=()=>e.remove();
+  }
+}
+</script>
+</body>
+</html>
