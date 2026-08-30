@@ -72,6 +72,7 @@ h1{margin:0;color:#fff;font-size:clamp(32px,9vw,54px);line-height:1.05;text-shad
 .iconbtn:active{transform:translateY(2px);box-shadow:0 2px 0 #2a166b55}
 .iconbtn.off{opacity:.45}
 .chip{background:#fff;border-radius:15px;box-shadow:0 4px 0 #2a166b55;padding:8px 14px;font-weight:900;font-size:15px}
+.topr{display:flex;gap:7px;flex:none}
 .meta{display:flex;justify-content:space-between;color:#fff;font-size:13px;font-weight:900;text-shadow:0 2px #2a166b55;padding:0 3px}
 .pbar{height:12px;border-radius:20px;overflow:hidden;background:#ffffff55;box-shadow:inset 0 2px 4px #2a166b55}
 .pfill{height:100%;width:0;border-radius:20px;background:linear-gradient(90deg,#ffe066,#7dffb0);transition:width .3s ease}
@@ -170,7 +171,10 @@ h1{margin:0;color:#fff;font-size:clamp(32px,9vw,54px);line-height:1.05;text-shad
   <div class="top">
     <button class="iconbtn" id="homeBtn" aria-label="เลือกด่านอื่น">⬅</button>
     <div class="chip">📥 <span id="doneN">0</span>/<span id="totalN">0</span></div>
-    <button class="iconbtn" id="soundBtn" aria-label="เสียง">🔊</button>
+    <div class="topr">
+      <button class="iconbtn" id="musicBtn" aria-label="เพลงประกอบ">🎵</button>
+      <button class="iconbtn" id="soundBtn" aria-label="เสียง">🔊</button>
+    </div>
   </div>
   <div class="meta"><span id="leftLbl">เหลืออีก</span><span id="pctLbl">0%</span></div>
   <div class="pbar"><div class="pfill" id="pfill"></div></div>
@@ -273,25 +277,27 @@ const $=id=>document.getElementById(id);
 const shuffle=a=>{a=a.slice();for(let i=a.length-1;i;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
 
 /* ============ sound: short synthesised sfx, nothing to download ============ */
-let AC=null,sfxG=null;
+let AC=null,sfxG=null,musG=null,musTimer=null,musStep=0,musNext=0;
 let soundOn=localStorage.getItem("sir_sound")!=="0";
+let musicOn=localStorage.getItem("sir_music")!=="0",musicWanted=false;
 function ac(){
   if(!AC){
     const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;
     AC=new C();
     const master=AC.createGain();master.gain.value=.9;master.connect(AC.destination);
+    musG=AC.createGain();musG.gain.value=0;musG.connect(master);
     sfxG=AC.createGain();sfxG.gain.value=.9;sfxG.connect(master);
   }
   if(AC.state==="suspended")AC.resume();
   return AC;
 }
 const NOTE=n=>440*Math.pow(2,(n-69)/12);
-function tone(freq,t,dur,type,peak){
+function tone(freq,t,dur,type,peak,dest){
   const o=AC.createOscillator(),g=AC.createGain();
   o.type=type;o.frequency.setValueAtTime(freq,t);
   g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.02);
   g.gain.exponentialRampToValueAtTime(.0001,t+dur);
-  o.connect(g);g.connect(sfxG);o.start(t);o.stop(t+dur+.05);
+  o.connect(g);g.connect(dest||sfxG);o.start(t);o.stop(t+dur+.05);
 }
 function sfx(kind){
   if(!soundOn||!ac())return;const t=AC.currentTime;
@@ -307,6 +313,26 @@ function sfx(kind){
   }
   else if(kind==="win")[72,76,79,84,88,91].forEach((n,i)=>tone(NOTE(n),t+i*.1,.55,"triangle",.22));
 }
+/* a calm four-bar loop: I - vi - IV - V with a soft pad, a bass and a pentatonic pluck */
+const CHORDS=[[48,[60,64,67,72]],[45,[57,60,64,69]],[53,[53,60,65,69]],[55,[55,59,62,67]]];
+const BEAT=.44;
+function musicTick(){
+  if(!AC)return;
+  while(musNext<AC.currentTime+.4){
+    const bar=Math.floor(musStep/8)%4,step=musStep%8,ch=CHORDS[bar];
+    if(step===0){tone(NOTE(ch[0]),musNext,BEAT*7,"triangle",.09,musG);tone(NOTE(ch[0]+12),musNext,BEAT*7,"sine",.05,musG)}
+    if(step===4)tone(NOTE(ch[0]+7),musNext,BEAT*2.4,"triangle",.06,musG);
+    tone(NOTE(ch[1][(step*3)%4]+(step===6?12:0)),musNext,.55,"sine",.075,musG);
+    musNext+=BEAT;musStep++;
+  }
+}
+function applyMusic(){
+  if(!AC)return;
+  musG.gain.cancelScheduledValues(AC.currentTime);
+  musG.gain.linearRampToValueAtTime(musicOn&&musicWanted?.5:0,AC.currentTime+.7);
+}
+function musicPlay(){musicWanted=true;if(!ac())return;if(!musTimer){musNext=AC.currentTime+.15;musStep=0;musTimer=setInterval(musicTick,70)}applyMusic()}
+function musicPause(){musicWanted=false;applyMusic()}
 
 /* speech reads the item name in Thai when a new card appears */
 let thVoice=null;
@@ -369,6 +395,7 @@ function newGame(level){
   $("start").hidden=$("end").hidden=true;$("game").hidden=false;
   $("totalN").textContent=game.total;
   buildBoxes(level);
+  musicPlay();
   render(true);
 }
 function render(announce){
@@ -451,7 +478,7 @@ card.addEventListener("pointercancel",()=>{if(drag){drag=null;card.classList.rem
 /* ============ marking happens only once every item is in a box ============ */
 function check(){
   if(game.left.length)return;
-  game.active=false;
+  game.active=false;musicPause();
   const level=game.level;
   const ok=game.answers.filter(a=>a.it[2]===a.cls),bad=game.answers.filter(a=>a.it[2]!==a.cls);
   const pct=Math.round(ok.length/game.total*100),stars=pct>=95?3:pct>=80?2:pct>=55?1:0;
@@ -489,7 +516,7 @@ $("checkBtn").onclick=check;
 /* ============ chrome ============ */
 $("againBtn").onclick=()=>newGame(game.level);
 $("menuBtn").onclick=()=>{$("end").hidden=true;$("start").hidden=false;renderLevelList()};
-$("homeBtn").onclick=()=>{game.active=false;$("game").hidden=true;$("start").hidden=false;renderLevelList()};
+$("homeBtn").onclick=()=>{game.active=false;musicPause();$("game").hidden=true;$("start").hidden=false;renderLevelList()};
 $("undoBtn").onclick=undo;
 $("hintBtn").onclick=useHint;
 $("tipBtn").onclick=()=>{const t=$("tipBox");t.hidden=!t.hidden;if(!t.hidden)t.scrollIntoView({behavior:"smooth",block:"nearest"})};
@@ -498,8 +525,15 @@ $("soundBtn").onclick=()=>{
   $("soundBtn").textContent=soundOn?"🔊":"🔇";$("soundBtn").classList.toggle("off",!soundOn);
   if(!soundOn&&"speechSynthesis" in window)speechSynthesis.cancel();
 };
+$("musicBtn").onclick=()=>{
+  musicOn=!musicOn;localStorage.setItem("sir_music",musicOn?"1":"0");
+  $("musicBtn").classList.toggle("off",!musicOn);
+  if(musicOn)musicPlay();else applyMusic();
+};
 $("soundBtn").textContent=soundOn?"🔊":"🔇";
 $("soundBtn").classList.toggle("off",!soundOn);
+$("musicBtn").classList.toggle("off",!musicOn);
+document.addEventListener("visibilitychange",()=>{if(document.hidden)musicPause();else if(game.active)musicPlay()});
 
 function confetti(){
   for(let i=0;i<34;i++){
