@@ -1,0 +1,813 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#0b3a2a">
+<title>ตะลุยป่าล่าสระ · Jungle Vowel Splash</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>🍉</text></svg>">
+<style>
+:root{
+  --ink:#123322;--safe:env(safe-area-inset-bottom,0px);--top:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{height:100%}
+body{margin:0;overflow:hidden;color:var(--ink);
+  font-family:"Baloo 2","Noto Sans Thai","Sarabun","Leelawadee UI","Thonburi","Comic Sans MS",system-ui,sans-serif;
+  background:#0b3a2a}
+button,a{font:inherit}
+
+/* ---------- jungle scene (behind everything) ---------- */
+#scene{position:fixed;inset:0;z-index:0;overflow:hidden;pointer-events:none}
+#scene svg{position:absolute;inset:0;width:100%;height:100%;display:block}
+.sway{transform-origin:0 0;animation:sway 7s ease-in-out infinite}
+.sway2{transform-origin:0 0;animation:sway 9s ease-in-out infinite reverse}
+@keyframes sway{50%{transform:rotate(3.5deg)}}
+.firefly{position:absolute;width:7px;height:7px;border-radius:50%;background:#ffe98a;
+  box-shadow:0 0 12px 5px rgba(255,233,138,.55);animation:fly 11s ease-in-out infinite,blink 2.6s ease-in-out infinite}
+@keyframes fly{0%,100%{transform:translate(0,0)}25%{transform:translate(28px,-40px)}50%{transform:translate(-24px,-70px)}75%{transform:translate(18px,-30px)}}
+@keyframes blink{50%{opacity:.15}}
+
+/* ---------- canvas ---------- */
+#cv{position:fixed;inset:0;z-index:1;touch-action:none}
+
+/* ---------- HUD ---------- */
+.hud{position:fixed;top:0;left:0;right:0;z-index:2;display:flex;flex-direction:column;gap:6px;
+  padding:calc(var(--top) + 8px) 10px 0;pointer-events:none}
+.hudrow{display:flex;align-items:center;justify-content:space-between;gap:7px}
+.iconbtn{pointer-events:auto;border:0;background:#fff;color:var(--ink);width:38px;height:38px;border-radius:14px;
+  box-shadow:0 4px 0 rgba(6,48,31,.5);font-size:17px;font-weight:900;cursor:pointer;flex:none}
+.iconbtn:active{transform:translateY(2px);box-shadow:0 2px 0 rgba(6,48,31,.5)}
+.iconbtn.off{opacity:.45}
+.topr{display:flex;gap:7px;flex:none}
+.chip{background:rgba(255,255,255,.94);border-radius:14px;box-shadow:0 4px 0 rgba(6,48,31,.4);
+  padding:6px 12px;font-weight:900;font-size:15px;white-space:nowrap}
+.chip.vow{background:linear-gradient(160deg,#ffe066,#ffb703);box-shadow:0 4px 0 #b57800}
+.hearts{display:flex;gap:2px;font-size:19px;line-height:1}
+.hearts span{transition:transform .2s,opacity .2s}
+.hearts span.lost{opacity:.4;transform:scale(.82)}
+.hearts span.pulse{animation:hpulse .5s}
+@keyframes hpulse{40%{transform:scale(1.5) rotate(-12deg)}}
+.hudrow.small{font-size:13px;font-weight:900;color:#fff;text-shadow:0 2px 3px rgba(0,0,0,.4);padding:0 3px}
+.combo{color:#ffe066}
+.tbar{height:10px;border-radius:20px;background:rgba(255,255,255,.3);overflow:hidden;box-shadow:inset 0 2px 4px rgba(0,0,0,.3)}
+.tfill{height:100%;width:100%;border-radius:20px;background:linear-gradient(90deg,#ffe066,#7dffb0);transition:width .25s linear}
+.tfill.warn{background:linear-gradient(90deg,#ffb703,#ff5f5f)}
+
+/* red flash on a wrong tap */
+#flash{position:fixed;inset:0;z-index:3;pointer-events:none;opacity:0;transition:opacity .2s;
+  background:radial-gradient(circle at 50% 55%,rgba(255,0,0,0) 45%,rgba(255,40,40,.45) 100%)}
+#flash.on{opacity:1;transition:opacity .05s}
+
+/* 3-2-1 countdown */
+#count{position:fixed;inset:0;z-index:4;display:flex;align-items:center;justify-content:center;
+  color:#fff;font-size:clamp(70px,26vw,150px);font-weight:900;text-shadow:0 8px 0 rgba(6,48,31,.45);pointer-events:none}
+#count.go{font-size:clamp(44px,15vw,90px)}
+
+/* ---------- overlays ---------- */
+.overlay{position:fixed;inset:0;z-index:6;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  text-align:center;gap:12px;padding:calc(var(--top) + 18px) 16px calc(var(--safe) + 24px);
+  overflow-y:auto;-webkit-overflow-scrolling:touch;background:rgba(6,44,30,.55);backdrop-filter:blur(2px)}
+.overlay[hidden],#hud[hidden],[hidden]{display:none!important}
+.overlay>*{flex:none}
+.spacer{flex:1 1 auto;min-height:0}
+h1{margin:0;color:#fff;font-size:clamp(30px,8.6vw,50px);line-height:1.05;text-shadow:0 5px 0 rgba(6,48,31,.5)}
+.subtitle{margin:0;color:#eafff3;font-weight:800;font-size:clamp(14px,3.8vw,19px)}
+.mascot{font-size:clamp(46px,13vw,74px);line-height:1;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-9px) rotate(4deg)}}
+.panel{width:min(94vw,420px);background:rgba(255,255,255,.95);border-radius:26px;padding:14px 18px;
+  box-shadow:0 8px 0 rgba(6,48,31,.35);text-align:left}
+.bigbtn{border:0;border-radius:26px;padding:15px 30px;background:#ffd34e;color:var(--ink);font-size:21px;font-weight:900;
+  box-shadow:0 7px 0 #c99b11;cursor:pointer;width:min(94vw,420px)}
+.bigbtn:active{transform:translateY(4px);box-shadow:0 3px 0 #c99b11}
+.bigbtn.alt{background:#fff;box-shadow:0 7px 0 rgba(6,48,31,.4)}
+.bigbtn small{display:block;font-size:13px;font-weight:800;opacity:.7}
+.hublink{color:#fff;font-weight:850;text-decoration:none;padding:6px}
+.tipbtn{border:0;background:rgba(255,255,255,.22);color:#fff;font-weight:900;border-radius:20px;padding:9px 18px;cursor:pointer}
+.tip{font-size:14px;line-height:1.6;font-weight:700}
+.tip .row{padding:7px 0;border-bottom:1px dashed #d7e6dc}
+.tip .row:last-child{border:0}
+
+/* vowel picker */
+.vowels{width:min(94vw,440px);display:flex;flex-direction:column;gap:12px}
+.vcard{border:0;border-radius:24px;padding:13px 16px;background:#fff;color:var(--ink);text-align:left;
+  display:flex;align-items:center;gap:14px;box-shadow:0 7px 0 rgba(6,48,31,.4);cursor:pointer}
+.vcard:active{transform:translateY(4px);box-shadow:0 3px 0 rgba(6,48,31,.4)}
+.vcard .vsym{flex:none;width:66px;height:56px;border-radius:18px;display:flex;align-items:center;justify-content:center;
+  font-size:25px;font-weight:900;color:#fff;background:linear-gradient(160deg,#3ddc8b,#0f7a4f);box-shadow:0 4px 0 #0a5637}
+.vcard:nth-child(2) .vsym{background:linear-gradient(160deg,#ffc46b,#e07b00);box-shadow:0 4px 0 #a85c00}
+.vcard:nth-child(3) .vsym{background:linear-gradient(160deg,#ff8fae,#d82f5c);box-shadow:0 4px 0 #a11f43}
+.vcard .vb{flex:1;min-width:0}
+.vcard .vt,.vcard .vx,.vcard .vbest{display:block}
+.vcard .vt{font-weight:900;font-size:19px;line-height:1.15}
+.vcard .vx{font-size:12.5px;font-weight:750;opacity:.7;margin-top:3px}
+.vcard .vbest{font-size:12px;font-weight:900;color:#0d8a4c;margin-top:3px}
+
+/* results */
+.scorebig{font-size:60px;font-weight:950;color:#0f7a4f;line-height:1}
+.stars{font-size:27px;letter-spacing:2px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-weight:800;font-size:15px;border-bottom:1px dashed #dfeae2}
+.row:last-child{border:0}
+.newbest{display:inline-block;margin-top:4px;background:#ffe066;border-radius:12px;padding:3px 12px;font-size:13px;font-weight:900}
+.conf{position:fixed;z-index:7;width:11px;height:11px;border-radius:3px;pointer-events:none}
+@media(max-height:680px){
+  .iconbtn{width:34px;height:34px;font-size:15px}.chip{padding:5px 10px;font-size:13.5px}
+  .vcard{padding:10px 13px}.vcard .vsym{width:58px;height:48px;font-size:22px}.vcard .vt{font-size:17px}
+}
+</style>
+</head>
+<body>
+
+<!-- ======= JUNGLE SCENE ======= -->
+<div id="scene" aria-hidden="true">
+  <svg viewBox="0 0 400 800" preserveAspectRatio="xMidYMid slice">
+    <defs>
+      <linearGradient id="sky" x1="0" y1="0" x2="0" y2="1">
+        <stop offset="0" stop-color="#062c1f"/><stop offset=".38" stop-color="#0f5c40"/>
+        <stop offset=".72" stop-color="#1b8b5c"/><stop offset="1" stop-color="#2fae6d"/>
+      </linearGradient>
+      <radialGradient id="sun" cx=".5" cy=".5" r=".5">
+        <stop offset="0" stop-color="#fff6c4" stop-opacity=".8"/><stop offset="1" stop-color="#fff6c4" stop-opacity="0"/>
+      </radialGradient>
+      <linearGradient id="lfA" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#6ee7a5"/><stop offset="1" stop-color="#1c7a4f"/>
+      </linearGradient>
+      <linearGradient id="lfB" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#33a86e"/><stop offset="1" stop-color="#0c4a30"/>
+      </linearGradient>
+      <linearGradient id="lfC" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#1f7d54"/><stop offset="1" stop-color="#07341f"/>
+      </linearGradient>
+      <g id="leaf">
+        <path d="M0 0 C 12 -30 52 -44 88 -22 C 58 14 18 22 0 0 Z"/>
+        <path d="M3 -3 C 26 -14 56 -22 82 -22" fill="none" stroke="rgba(255,255,255,.28)" stroke-width="2.4" stroke-linecap="round"/>
+      </g>
+      <g id="fern">
+        <path d="M0 0 C 10 -18 34 -26 58 -14 C 38 8 12 14 0 0 Z"/>
+      </g>
+    </defs>
+
+    <rect width="400" height="800" fill="url(#sky)"/>
+    <circle cx="292" cy="70" r="170" fill="url(#sun)"/>
+    <!-- light shafts -->
+    <g opacity=".13" fill="#fff9d8">
+      <path d="M250 -20 L330 -20 L180 400 L120 400 Z"/>
+      <path d="M340 -20 L378 -20 L300 340 L250 340 Z"/>
+    </g>
+    <!-- distant canopy -->
+    <g fill="url(#lfC)" opacity=".85">
+      <ellipse cx="40" cy="150" rx="120" ry="70"/><ellipse cx="200" cy="95" rx="140" ry="66"/>
+      <ellipse cx="370" cy="160" rx="115" ry="66"/><ellipse cx="120" cy="60" rx="110" ry="60"/>
+    </g>
+    <!-- vines -->
+    <g stroke="#0d5636" stroke-width="3.4" fill="none" opacity=".8">
+      <path d="M70 0 C 60 90 96 150 78 240"/>
+      <path d="M250 0 C 262 70 232 120 250 190"/>
+      <path d="M340 0 C 330 60 356 110 342 170"/>
+    </g>
+    <g fill="#178a58" opacity=".9">
+      <ellipse cx="78" cy="243" rx="9" ry="13"/><ellipse cx="250" cy="193" rx="8" ry="12"/><ellipse cx="342" cy="173" rx="8" ry="12"/>
+      <ellipse cx="64" cy="150" rx="7" ry="11"/><ellipse cx="259" cy="120" rx="7" ry="11"/>
+    </g>
+    <!-- top corner leaves -->
+    <g class="sway"><use href="#leaf" x="0" y="0" fill="url(#lfA)" transform="translate(-14,26) rotate(24) scale(1.25)"/></g>
+    <g class="sway2"><use href="#leaf" x="0" y="0" fill="url(#lfB)" transform="translate(-6,120) rotate(-16) scale(1.05)"/></g>
+    <g class="sway2"><use href="#leaf" x="0" y="0" fill="url(#lfA)" transform="translate(412,40) rotate(158) scale(1.3)"/></g>
+    <g class="sway"><use href="#leaf" x="0" y="0" fill="url(#lfB)" transform="translate(408,140) rotate(196) scale(1.05)"/></g>
+    <!-- bottom foliage -->
+    <g fill="url(#lfC)">
+      <ellipse cx="30" cy="790" rx="130" ry="80"/><ellipse cx="200" cy="812" rx="150" ry="76"/>
+      <ellipse cx="372" cy="792" rx="128" ry="80"/>
+    </g>
+    <g class="sway"><use href="#leaf" x="0" y="0" fill="url(#lfB)" transform="translate(-10,760) rotate(-32) scale(1.35)"/></g>
+    <g class="sway2"><use href="#leaf" x="0" y="0" fill="url(#lfA)" transform="translate(96,790) rotate(-58) scale(1.05)"/></g>
+    <g class="sway2"><use href="#leaf" x="0" y="0" fill="url(#lfB)" transform="translate(410,772) rotate(212) scale(1.35)"/></g>
+    <g class="sway"><use href="#leaf" x="0" y="0" fill="url(#lfA)" transform="translate(300,796) rotate(238) scale(1.05)"/></g>
+    <g fill="url(#lfB)" opacity=".9">
+      <use href="#fern" transform="translate(150,800) rotate(-72) scale(1.2)"/>
+      <use href="#fern" transform="translate(232,802) rotate(-108) scale(1.2)"/>
+    </g>
+  </svg>
+  <i class="firefly" style="left:16%;top:52%"></i>
+  <i class="firefly" style="left:74%;top:44%;animation-delay:-3s"></i>
+  <i class="firefly" style="left:38%;top:66%;animation-delay:-6s"></i>
+  <i class="firefly" style="left:86%;top:70%;animation-delay:-8s"></i>
+  <i class="firefly" style="left:56%;top:33%;animation-delay:-4.5s"></i>
+</div>
+
+<canvas id="cv"></canvas>
+<div id="flash"></div>
+
+<!-- ======= HUD ======= -->
+<div class="hud" id="hud" hidden>
+  <div class="hudrow">
+    <button class="iconbtn" id="backBtn" aria-label="ออกจากเกม">⬅</button>
+    <div class="chip">⭐ <span id="scoreN">0</span></div>
+    <div class="hearts" id="hearts"><span>❤️</span><span>❤️</span><span>❤️</span></div>
+    <div class="topr">
+      <button class="iconbtn" id="musicBtn" aria-label="เพลงประกอบ">🎵</button>
+      <button class="iconbtn" id="soundBtn" aria-label="เสียง">🔊</button>
+    </div>
+  </div>
+  <div class="hudrow small">
+    <span class="chip vow" id="vowChip">แตะคำที่มี สระเอีย</span>
+    <span id="comboLbl" class="combo"></span>
+    <span id="timeLbl">5:00</span>
+  </div>
+  <div class="tbar"><div class="tfill" id="tfill"></div></div>
+</div>
+<div id="count" hidden>3</div>
+
+<!-- ======= START / VOWEL PICKER ======= -->
+<section class="overlay" id="start">
+  <div class="mascot">🐒🍉</div>
+  <h1>ตะลุยป่าล่าสระ</h1>
+  <p class="subtitle">เลือกสระที่จะฝึก แล้วแตะเฉพาะผลไม้ที่มีคำสระนั้น!</p>
+  <div class="vowels" id="vowelList"></div>
+  <button class="tipbtn" id="tipBtn">📖 วิธีเล่น</button>
+  <div class="panel tip" id="tipBox" hidden>
+    <div class="row">🍉 ผลไม้จะถูกโยนขึ้นมาพร้อมคำต่าง ๆ</div>
+    <div class="row">👆 แตะเฉพาะผลไม้ที่มีคำสระที่เลือกไว้ ผลไม้จะแตกและได้คะแนน</div>
+    <div class="row">💔 ถ้าแตะผิดจะเสียหัวใจ 1 ดวง (มี 3 ดวง) แต่คะแนนไม่ลด</div>
+    <div class="row">⏱️ เล่นได้ 5 นาที หรือจนกว่าหัวใจจะหมด</div>
+    <div class="row">🔥 แตะถูกติดกันหลายครั้ง จะได้คะแนนโบนัสเพิ่ม</div>
+  </div>
+  <div class="spacer"></div>
+  <a class="hublink" href="../">← All games</a>
+</section>
+
+<!-- ======= PAUSE ======= -->
+<section class="overlay" id="pause" hidden>
+  <div class="spacer"></div>
+  <div class="mascot">⏸️</div>
+  <h1>พักก่อน</h1>
+  <button class="bigbtn" id="resumeBtn">▶ เล่นต่อ</button>
+  <button class="bigbtn alt" id="quitBtn">🏠 ออกไปเลือกสระใหม่</button>
+  <div class="spacer"></div>
+</section>
+
+<!-- ======= RESULTS ======= -->
+<section class="overlay" id="end" hidden>
+  <div class="mascot" id="medal">🏆</div>
+  <h1 id="endTitle">เก่งมาก!</h1>
+  <p class="subtitle" id="endWhy">หมดเวลาแล้ว</p>
+  <div class="panel" style="text-align:center">
+    <div class="scorebig" id="endScore">0</div>
+    <div class="stars" id="endStars">⭐⭐⭐</div>
+    <div id="bestTag"></div>
+    <div class="row"><span>🍉 แตะถูก</span><b id="rOk">0</b></div>
+    <div class="row"><span>💔 แตะผิด</span><b id="rNo">0</b></div>
+    <div class="row"><span>🎯 ความแม่นยำ</span><b id="rAcc">0%</b></div>
+    <div class="row"><span>🏅 สถิติสูงสุดสระนี้</span><b id="rBest">0</b></div>
+  </div>
+  <div class="panel tip" id="missBox" hidden></div>
+  <button class="bigbtn" id="againBtn">▶ เล่นสระนี้อีกครั้ง</button>
+  <button class="bigbtn alt" id="menuBtn">🔤 เลือกสระอื่น</button>
+  <div class="spacer"></div>
+  <a class="hublink" href="../">← All games</a>
+</section>
+
+<div id="fx"></div>
+
+<script>
+/* ============ data: three vowels from the ป.1 Thai lesson ============
+   every word in a vowel list uses ONLY that vowel out of the three, so a word is
+   never a correct answer for two different rounds. */
+const VOWELS=[
+  {id:"eia",label:"สระเอีย",sym:"เ◌ีย",ex:"เขียน · เรียน · เขียว"},
+  {id:"ua", label:"สระอัว", sym:"◌ัว", ex:"หัว · วัว · ครัว"},
+  {id:"a",  label:"สระอะ",  sym:"◌ะ",  ex:"มะนาว · ทะเล · สะพาน"},
+];
+const WORDS={
+  eia:["เขียน","เรียน","เขียว","เสียง","เลี้ยง","เตียง","เปียก","เดียว","เพียง","เรียบ",
+       "เลี้ยว","เกี่ยว","เจี๊ยบ","เกี๊ยว","เสีย","เมีย","เรียง","เขี้ยว"],
+  ua: ["หัว","ตัว","วัว","ครัว","รั้ว","บัว","กลัว","ถั่ว","หัวใจ","หัวหอม",
+       "บัวลอย","ตัวเลข","มัว","ทั่ว","ชั่ว","หัวเข่า"],
+  a:  ["มะนาว","มะพร้าว","สะพาน","ทะเล","กระต่าย","ตะกร้า","ชะนี","ระฆัง","สะอาด","กะทิ",
+       "มะละกอ","ปะการัง","กระโดด","ตะวัน","พระ","สะดุด"],
+  /* fruit words that use none of the three vowels — always wrong to tap */
+  other:["ปลา","หมา","แมว","นก","ไก่","ปู","กบ","ช้าง","ลิง","ดาว","น้ำ","ไฟ","มือ","ตา","หู","ขา",
+         "บ้าน","หนังสือ","ดินสอ","รองเท้า","ดอกไม้","ต้นไม้","ภูเขา","ลม","ฝน","หมู","ไข่","นม",
+         "ข้าว","ส้ม","แตงโม","มังคุด","ลำไย","ฝรั่ง","เด็ก","ครู","พ่อ","แม่","พี่","น้อง","เพื่อน",
+         "สมุด","จาน","ช้อน","แก้ว","หมอน","รถ","เรือ","ถนน","ผีเสื้อ","นาฬิกา","ทุ่งนา","ป่าไม้"],
+};
+const CONF=["#ffd34e","#ff5f8f","#4f8cff","#7dffb0","#c08cff"];
+const $=id=>document.getElementById(id);
+const rnd=(a,b)=>a+Math.random()*(b-a);
+const pick=a=>a[Math.floor(Math.random()*a.length)];
+
+/* ============ audio: everything synthesised, no asset files ============ */
+let AC=null,sfxG=null,musG=null,NB=null,musTimer=null,musStep=0,musNext=0;
+let soundOn=localStorage.getItem("tvj_sound")!=="0";
+let musicOn=localStorage.getItem("tvj_music")!=="0",musicWanted=false;
+function ac(){
+  if(!AC){
+    const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;
+    AC=new C();
+    const master=AC.createGain();master.gain.value=.9;master.connect(AC.destination);
+    musG=AC.createGain();musG.gain.value=0;musG.connect(master);
+    sfxG=AC.createGain();sfxG.gain.value=.9;sfxG.connect(master);
+  }
+  if(AC.state==="suspended")AC.resume();
+  return AC;
+}
+function noiseBuf(){
+  if(!NB){
+    NB=AC.createBuffer(1,Math.floor(AC.sampleRate*.5),AC.sampleRate);
+    const d=NB.getChannelData(0);
+    for(let i=0;i<d.length;i++)d[i]=Math.random()*2-1;
+  }
+  return NB;
+}
+const NOTE=n=>440*Math.pow(2,(n-69)/12);
+function tone(freq,t,dur,type,peak,dest){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.02);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g);g.connect(dest||sfxG);o.start(t);o.stop(t+dur+.05);
+}
+function drum(t,f0,f1,peak,dur,dest){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type="sine";o.frequency.setValueAtTime(f0,t);o.frequency.exponentialRampToValueAtTime(f1,t+dur);
+  g.gain.setValueAtTime(peak,t);g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g);g.connect(dest||sfxG);o.start(t);o.stop(t+dur+.03);
+}
+function shaker(t,peak,dest){
+  const s=AC.createBufferSource();s.buffer=noiseBuf();
+  const bp=AC.createBiquadFilter();bp.type="bandpass";bp.frequency.value=7200;bp.Q.value=1.1;
+  const g=AC.createGain();
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.006);
+  g.gain.exponentialRampToValueAtTime(.0001,t+.07);
+  s.connect(bp);bp.connect(g);g.connect(dest||sfxG);s.start(t);s.stop(t+.1);
+}
+function sfx(kind){
+  if(!soundOn||!ac())return;const t=AC.currentTime;
+  if(kind==="slice"){
+    const s=AC.createBufferSource();s.buffer=noiseBuf();
+    const bp=AC.createBiquadFilter();bp.type="bandpass";bp.Q.value=1.4;
+    bp.frequency.setValueAtTime(1100,t);bp.frequency.exponentialRampToValueAtTime(5600,t+.13);
+    const g=AC.createGain();
+    g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(.3,t+.012);
+    g.gain.exponentialRampToValueAtTime(.0001,t+.2);
+    s.connect(bp);bp.connect(g);g.connect(sfxG);s.start(t);s.stop(t+.25);
+    tone(NOTE(84),t,.13,"sine",.16);tone(NOTE(91),t+.05,.18,"sine",.1);
+  }
+  else if(kind==="wrong"){
+    const o=AC.createOscillator(),g=AC.createGain();o.type="sawtooth";
+    o.frequency.setValueAtTime(230,t);o.frequency.exponentialRampToValueAtTime(80,t+.32);
+    g.gain.setValueAtTime(.15,t);g.gain.exponentialRampToValueAtTime(.0001,t+.34);
+    o.connect(g);g.connect(sfxG);o.start(t);o.stop(t+.36);
+    drum(t,140,50,.22,.3);
+  }
+  else if(kind==="combo")[88,92,95].forEach((n,i)=>tone(NOTE(n),t+i*.05,.2,"sine",.13));
+  else if(kind==="tick")tone(NOTE(81),t,.07,"square",.1);
+  else if(kind==="go")[72,76,79,84].forEach((n,i)=>tone(NOTE(n),t+i*.09,.3,"triangle",.18));
+  else if(kind==="over")[76,72,69,64].forEach((n,i)=>tone(NOTE(n),t+i*.16,.5,"triangle",.19));
+  else if(kind==="win")[72,76,79,84,88,91].forEach((n,i)=>tone(NOTE(n),t+i*.1,.55,"triangle",.22));
+}
+/* a light jungle groove: tom + shaker + pentatonic marimba over a 4-bar bass */
+const BASSL=[45,45,41,43],PENT=[69,72,74,76,79];
+const MEL=[[0,-1,2,-1,4,-1,2,-1],[0,-1,2,4,-1,3,-1,2],[1,-1,3,-1,4,-1,3,1],[2,-1,4,3,-1,2,-1,0]];
+const BEAT=.27;
+function musicTick(){
+  if(!AC)return;
+  while(musNext<AC.currentTime+.4){
+    const bar=Math.floor(musStep/8)%4,step=musStep%8,root=BASSL[bar];
+    if(step===0){drum(musNext,155,58,.5,.26,musG);tone(NOTE(root),musNext,BEAT*3,"triangle",.1,musG)}
+    if(step===4){drum(musNext,120,52,.3,.22,musG);tone(NOTE(root+7),musNext,BEAT*1.8,"triangle",.065,musG)}
+    shaker(musNext,step%2?.055:.028,musG);
+    const m=MEL[bar][step];
+    if(m>=0)tone(NOTE(PENT[m]),musNext,.4,"triangle",.08,musG);
+    musNext+=BEAT;musStep++;
+  }
+}
+function applyMusic(){
+  if(!AC)return;
+  musG.gain.cancelScheduledValues(AC.currentTime);
+  musG.gain.linearRampToValueAtTime(musicOn&&musicWanted?.42:0,AC.currentTime+.6);
+}
+function musicPlay(){musicWanted=true;if(!ac())return;if(!musTimer){musNext=AC.currentTime+.15;musStep=0;musTimer=setInterval(musicTick,70)}applyMusic()}
+function musicPause(){musicWanted=false;applyMusic()}
+
+let thVoice=null;
+function pickVoice(){try{thVoice=(speechSynthesis.getVoices()||[]).find(v=>/^th/i.test(v.lang))||null}catch(e){}}
+if("speechSynthesis" in window){pickVoice();speechSynthesis.onvoiceschanged=pickVoice}
+function speak(text){
+  if(!soundOn||!("speechSynthesis" in window))return;
+  try{speechSynthesis.cancel();const u=new SpeechSynthesisUtterance(text);
+    u.lang="th-TH";if(thVoice)u.voice=thVoice;u.rate=1.05;u.pitch=1.1;speechSynthesis.speak(u);}catch(e){}
+}
+function buzz(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
+
+/* ============ canvas ============ */
+const cv=$("cv"),ctx=cv.getContext("2d");
+let W=0,H=0,DPR=1;
+function resize(){
+  DPR=Math.min(window.devicePixelRatio||1,2.5);
+  W=window.innerWidth;H=window.innerHeight;
+  cv.width=Math.round(W*DPR);cv.height=Math.round(H*DPR);
+  cv.style.width=W+"px";cv.style.height=H+"px";
+  ctx.setTransform(DPR,0,0,DPR,0,0);
+}
+window.addEventListener("resize",resize);resize();
+
+/* fruit looks: rind gradient, flesh colour for the sliced halves, juice colour for the splash */
+const FRUITS=[
+  {id:"watermelon",a:"#6fd07a",b:"#237c37",flesh:"#ff6b81",juice:"#ff5d73",shape:"circle",deco:"stripes",leaf:true,seeds:true},
+  {id:"orange",    a:"#ffc061",b:"#e8760c",flesh:"#ffb545",juice:"#ff9f1c",shape:"circle",deco:"pores",leaf:true},
+  {id:"apple",     a:"#ff8080",b:"#b3111f",flesh:"#fff0cf",juice:"#e63946",shape:"apple",leaf:true},
+  {id:"lemon",     a:"#ffe680",b:"#e3a505",flesh:"#fff3b0",juice:"#ffd23f",shape:"lemon",deco:"pores"},
+  {id:"dragon",    a:"#ff8fb2",b:"#c4174c",flesh:"#fff2f6",juice:"#ff5d8f",shape:"circle",deco:"flecks",leaf:true,seeds:true},
+  {id:"coconut",   a:"#b98457",b:"#4f2f1a",flesh:"#fffaf0",juice:"#e6d3ad",shape:"circle",deco:"eyes"},
+];
+function rrect(x,y,w,h,r){
+  ctx.beginPath();
+  ctx.moveTo(x+r,y);ctx.arcTo(x+w,y,x+w,y+h,r);ctx.arcTo(x+w,y+h,x,y+h,r);
+  ctx.arcTo(x,y+h,x,y,r);ctx.arcTo(x,y,x+w,y,r);ctx.closePath();
+}
+function fruitPath(t,r){
+  ctx.beginPath();
+  if(t.shape==="lemon"){ctx.ellipse(0,0,r,r*.78,0,0,7)}
+  else if(t.shape==="apple"){
+    ctx.moveTo(0,-r*.6);
+    ctx.bezierCurveTo(r*.5,-r*1.12,r*1.12,-r*.4,r*.96,r*.18);
+    ctx.bezierCurveTo(r*.84,r*.82,r*.3,r*1.02,0,r*.78);
+    ctx.bezierCurveTo(-r*.3,r*1.02,-r*.84,r*.82,-r*.96,r*.18);
+    ctx.bezierCurveTo(-r*1.12,-r*.4,-r*.5,-r*1.12,0,-r*.6);
+  }
+  else{ctx.arc(0,0,r,0,7)}
+  ctx.closePath();
+}
+function drawFruit(t,r){
+  ctx.save();
+  ctx.shadowColor="rgba(4,30,18,.35)";ctx.shadowBlur=r*.35;ctx.shadowOffsetY=r*.12;
+  const g=ctx.createRadialGradient(-r*.32,-r*.36,r*.08,0,0,r*1.08);
+  g.addColorStop(0,t.a);g.addColorStop(1,t.b);
+  ctx.fillStyle=g;fruitPath(t,r);ctx.fill();
+  ctx.restore();
+
+  ctx.save();fruitPath(t,r);ctx.clip();
+  if(t.deco==="stripes"){
+    ctx.strokeStyle="rgba(9,64,30,.55)";ctx.lineWidth=r*.16;ctx.lineCap="round";
+    for(let i=-2;i<=2;i++){
+      ctx.beginPath();
+      ctx.moveTo(i*r*.42,-r*1.1);
+      ctx.quadraticCurveTo(i*r*.62,0,i*r*.42,r*1.1);
+      ctx.stroke();
+    }
+  }else if(t.deco==="pores"){
+    ctx.fillStyle="rgba(255,255,255,.22)";
+    for(let i=0;i<16;i++){
+      const a=Math.random()*7,d=Math.random()*r*.85;
+      ctx.beginPath();ctx.arc(Math.cos(a)*d,Math.sin(a)*d,r*.045,0,7);ctx.fill();
+    }
+  }else if(t.deco==="flecks"){
+    ctx.fillStyle="rgba(120,220,140,.75)";
+    for(let i=0;i<5;i++){
+      const a=i*1.25+.4;
+      ctx.save();ctx.translate(Math.cos(a)*r*.6,Math.sin(a)*r*.6);ctx.rotate(a);
+      ctx.beginPath();ctx.ellipse(0,0,r*.3,r*.11,0,0,7);ctx.fill();ctx.restore();
+    }
+  }else if(t.deco==="eyes"){
+    ctx.fillStyle="rgba(40,22,10,.75)";
+    [[-.3,-.15],[.3,-.15],[0,.28]].forEach(p=>{
+      ctx.beginPath();ctx.arc(p[0]*r,p[1]*r,r*.11,0,7);ctx.fill();
+    });
+  }
+  ctx.fillStyle="rgba(255,255,255,.3)";
+  ctx.beginPath();ctx.ellipse(-r*.34,-r*.42,r*.3,r*.16,-.7,0,7);ctx.fill();
+  ctx.restore();
+
+  if(t.leaf){
+    ctx.save();ctx.translate(0,-r*.92);ctx.rotate(-.5);
+    ctx.fillStyle="#2f9c5f";
+    ctx.beginPath();ctx.ellipse(r*.28,0,r*.3,r*.14,0,0,7);ctx.fill();
+    ctx.strokeStyle="#6b4a1e";ctx.lineWidth=r*.09;ctx.lineCap="round";
+    ctx.beginPath();ctx.moveTo(0,r*.12);ctx.lineTo(0,-r*.12);ctx.stroke();
+    ctx.restore();
+  }
+}
+function drawHalf(p){
+  const t=p.t,r=p.r;
+  ctx.save();ctx.translate(p.x,p.y);ctx.rotate(p.rot);ctx.globalAlpha=Math.min(1,p.life*2.2);
+  ctx.beginPath();ctx.arc(0,0,r,-Math.PI/2,Math.PI/2,p.side<0);
+  ctx.closePath();
+  ctx.fillStyle=t.flesh;ctx.fill();
+  ctx.lineWidth=r*.2;ctx.strokeStyle=t.b;ctx.stroke();
+  if(t.seeds){
+    ctx.fillStyle="rgba(45,25,15,.8)";
+    for(let i=0;i<3;i++){
+      const y=(i-1)*r*.4;
+      ctx.beginPath();ctx.ellipse(p.side*r*.3,y,r*.07,r*.11,0,0,7);ctx.fill();
+    }
+  }
+  ctx.restore();
+}
+function drawLabel(word,x,y,r){
+  let fs=Math.max(13,r*.46);
+  ctx.font="900 "+fs+"px 'Baloo 2','Noto Sans Thai',sans-serif";
+  let w=ctx.measureText(word).width;
+  const maxw=r*2.15;
+  if(w>maxw){fs=fs*maxw/w;ctx.font="900 "+fs+"px 'Baloo 2','Noto Sans Thai',sans-serif";w=ctx.measureText(word).width}
+  const padx=fs*.42,h=fs*1.5;
+  ctx.save();
+  ctx.shadowColor="rgba(4,30,18,.4)";ctx.shadowBlur=6;ctx.shadowOffsetY=2;
+  ctx.fillStyle="rgba(255,255,255,.96)";
+  rrect(x-w/2-padx,y-h/2,w+padx*2,h,h*.42);ctx.fill();
+  ctx.restore();
+  ctx.fillStyle="#123322";ctx.textAlign="center";ctx.textBaseline="middle";
+  ctx.fillText(word,x,y+fs*.06);
+}
+
+/* ============ game state ============ */
+const ROUND=300; /* 5 minutes */
+const G={running:false,paused:false,over:false,vowel:null,targets:[],distract:[],
+  fruits:[],bits:[],pops:[],score:0,hearts:3,correct:0,wrong:0,missed:0,streak:0,best:0,
+  timeLeft:ROUND,countdown:0,started:false,spawnIn:0,sinceTarget:0,recent:[],last:0,shake:0,lastTick:0};
+
+function bestFor(id){return +(localStorage.getItem("tvj_best_"+id)||0)}
+function renderVowelList(){
+  const wrap=$("vowelList");wrap.innerHTML="";
+  for(const v of VOWELS){
+    const b=document.createElement("button");b.className="vcard";
+    const best=bestFor(v.id);
+    b.innerHTML='<span class="vsym">'+v.sym+'</span><span class="vb">'+
+      '<span class="vt">'+v.label+'</span><span class="vx">'+v.ex+'</span>'+
+      (best?'<span class="vbest">🏅 สถิติสูงสุด '+best+' คะแนน</span>':'')+'</span>';
+    b.onclick=()=>{ac();startGame(v)};
+    wrap.appendChild(b);
+  }
+}
+renderVowelList();
+
+function startGame(v){
+  G.vowel=v;
+  G.targets=WORDS[v.id];
+  G.distract=VOWELS.filter(x=>x.id!==v.id).flatMap(x=>WORDS[x.id]).concat(WORDS.other);
+  G.fruits=[];G.bits=[];G.pops=[];
+  G.score=0;G.hearts=3;G.correct=0;G.wrong=0;G.missed=0;G.streak=0;
+  G.timeLeft=ROUND;G.countdown=3.2;G.started=false;G.spawnIn=.4;G.sinceTarget=0;G.recent=[];
+  G.shake=0;G.over=false;G.paused=false;G.running=true;G.lastTick=ROUND;
+  G.best=bestFor(v.id);
+  $("start").hidden=$("end").hidden=$("pause").hidden=true;
+  $("hud").hidden=false;
+  $("vowChip").textContent="แตะคำที่มี "+v.label;
+  $("count").hidden=false;$("count").textContent="3";$("count").classList.remove("go");
+  updateHud();
+  musicPlay();
+  G.last=performance.now();
+  requestAnimationFrame(frame);
+}
+function updateHud(){
+  $("scoreN").textContent=G.score;
+  const hs=$("hearts").children;
+  for(let i=0;i<3;i++){
+    hs[i].textContent=i<G.hearts?"❤️":"🤍";
+    hs[i].classList.toggle("lost",i>=G.hearts);
+  }
+  const s=Math.max(0,Math.ceil(G.timeLeft));
+  $("timeLbl").textContent=Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+  $("tfill").style.width=(G.timeLeft/ROUND*100)+"%";
+  $("tfill").classList.toggle("warn",G.timeLeft<=30);
+  $("comboLbl").textContent=G.streak>=3?"🔥 คอมโบ x"+G.streak:"";
+}
+
+/* ---- spawning ---- */
+function spawn(){
+  const t=pick(FRUITS);
+  const wantTarget=G.sinceTarget>=2||Math.random()<.45;
+  let word,tries=0;
+  do{word=pick(wantTarget?G.targets:G.distract);tries++}
+  while(G.recent.includes(word)&&tries<8);
+  G.recent.push(word);if(G.recent.length>5)G.recent.shift();
+  G.sinceTarget=wantTarget?0:G.sinceTarget+1;
+
+  const r=Math.max(38,Math.min(60,W*.12));
+  const g=H*.62;
+  const apex=H*rnd(.44,.66);
+  const vy=-Math.sqrt(2*g*apex);
+  const T=2*Math.abs(vy)/g;
+  const x=rnd(W*.15,W*.85),tx=rnd(W*.15,W*.85);
+  G.fruits.push({x,y:H+r,vx:(tx-x)/T,vy,g,r,t,word,
+    target:wantTarget,rot:rnd(0,6.28),vrot:rnd(-.7,.7),dead:false,wrongTapped:false,wrongT:0});
+}
+
+/* ---- taps ---- */
+cv.addEventListener("pointerdown",e=>{
+  if(!G.running||G.paused||!G.started)return;
+  const b=cv.getBoundingClientRect(),x=e.clientX-b.left,y=e.clientY-b.top;
+  for(let i=G.fruits.length-1;i>=0;i--){
+    const f=G.fruits[i];
+    if(f.dead||f.wrongTapped)continue;
+    const dx=x-f.x,dy=y-f.y;
+    if(dx*dx+dy*dy<=(f.r*1.25)*(f.r*1.25)){f.target?hitRight(f):hitWrong(f);return}
+  }
+});
+function hitRight(f){
+  f.dead=true;
+  G.correct++;G.streak++;
+  const pts=10+Math.min(G.streak-1,5)*2;
+  G.score+=pts;
+  splash(f,pts);
+  sfx("slice");if(G.streak>0&&G.streak%5===0)sfx("combo");
+  buzz(12);speak(f.word);
+  updateHud();
+}
+function hitWrong(f){
+  f.wrongTapped=true;f.wrongT=1;
+  G.wrong++;G.streak=0;G.hearts--;
+  sfx("wrong");buzz([15,50,15]);
+  G.shake=.45;
+  $("flash").classList.add("on");
+  setTimeout(()=>$("flash").classList.remove("on"),170);
+  const hs=$("hearts").children[Math.max(0,G.hearts)];
+  if(hs){hs.classList.add("pulse");setTimeout(()=>hs.classList.remove("pulse"),520)}
+  updateHud();
+  if(G.hearts<=0)endGame("hearts");
+}
+function splash(f,pts){
+  for(let i=0;i<2;i++){
+    G.bits.push({kind:"half",t:f.t,r:f.r,x:f.x,y:f.y,side:i?1:-1,
+      vx:f.vx+(i?1:-1)*rnd(90,170),vy:f.vy*.4-rnd(30,90),rot:f.rot,vrot:(i?1:-1)*rnd(1.5,3.5),life:.9,g:H*.75});
+  }
+  for(let i=0;i<14;i++){
+    const a=Math.random()*6.28,sp=rnd(60,320);
+    G.bits.push({kind:"juice",x:f.x,y:f.y,vx:Math.cos(a)*sp,vy:Math.sin(a)*sp-60,
+      r:rnd(f.r*.08,f.r*.2),color:f.t.juice,life:rnd(.35,.75),g:H*.9});
+  }
+  G.pops.push({x:f.x,y:f.y-f.r*.4,text:"+"+pts,life:1});
+}
+
+/* ---- loop ---- */
+function frame(ts){
+  if(!G.running)return;
+  const dt=Math.min(.05,(ts-G.last)/1000)||0;G.last=ts;
+  if(!G.paused)update(dt);
+  draw();
+  requestAnimationFrame(frame);
+}
+function update(dt){
+  if(!G.started){
+    const before=Math.ceil(Math.max(G.countdown,0));
+    G.countdown-=dt;
+    const after=Math.ceil(Math.max(G.countdown,0));
+    if(after!==before){
+      if(after>0){$("count").textContent=after;sfx("tick")}
+      else{$("count").textContent="ไปเลย!";$("count").classList.add("go");sfx("go")}
+    }
+    if(G.countdown<=-.7){$("count").hidden=true;G.started=true}
+    return;
+  }
+  /* timer */
+  G.timeLeft-=dt;
+  if(Math.ceil(G.timeLeft)!==Math.ceil(G.lastTick)){
+    G.lastTick=G.timeLeft;
+    if(G.timeLeft<=10&&G.timeLeft>0)sfx("tick");
+    updateHud();
+  }
+  if(G.timeLeft<=0){G.timeLeft=0;endGame("time");return}
+
+  /* spawning speeds up over the round */
+  G.spawnIn-=dt;
+  if(G.spawnIn<=0){
+    const prog=1-G.timeLeft/ROUND;
+    G.spawnIn=rnd(.85,1.15)-prog*.4;
+    spawn();
+  }
+  /* fruits */
+  for(const f of G.fruits){
+    f.vy+=f.g*dt;f.x+=f.vx*dt;f.y+=f.vy*dt;f.rot+=f.vrot*dt;
+    if(f.wrongT>0)f.wrongT-=dt;
+    if(f.y-f.r>H+40&&f.vy>0){
+      f.dead=true;
+      if(f.target&&!f.wrongTapped)G.missed++;
+    }
+  }
+  G.fruits=G.fruits.filter(f=>!f.dead);
+  /* bits + pops */
+  for(const p of G.bits){p.vy+=p.g*dt;p.x+=p.vx*dt;p.y+=p.vy*dt;p.life-=dt;if(p.rot!==undefined)p.rot+=p.vrot*dt}
+  G.bits=G.bits.filter(p=>p.life>0);
+  for(const p of G.pops){p.life-=dt*1.5;p.y-=48*dt}
+  G.pops=G.pops.filter(p=>p.life>0);
+  if(G.shake>0)G.shake=Math.max(0,G.shake-dt*1.6);
+}
+function draw(){
+  ctx.clearRect(0,0,W,H);
+  ctx.save();
+  if(G.shake>0){
+    const s=G.shake*11;
+    ctx.translate(rnd(-s,s),rnd(-s,s));
+  }
+  for(const p of G.bits){
+    if(p.kind==="half")drawHalf(p);
+    else{
+      ctx.globalAlpha=Math.max(0,Math.min(1,p.life*2));
+      ctx.fillStyle=p.color;
+      ctx.beginPath();ctx.arc(p.x,p.y,p.r,0,7);ctx.fill();
+      ctx.globalAlpha=1;
+    }
+  }
+  for(const f of G.fruits){
+    ctx.save();ctx.translate(f.x,f.y);ctx.rotate(f.rot);
+    if(f.wrongTapped)ctx.globalAlpha=.55;
+    drawFruit(f.t,f.r);
+    ctx.restore();
+    drawLabel(f.word,f.x,f.y,f.r);
+    if(f.wrongTapped){
+      ctx.save();ctx.strokeStyle="#ff3b3b";ctx.lineWidth=f.r*.16;ctx.lineCap="round";
+      const d=f.r*.55;
+      ctx.beginPath();
+      ctx.moveTo(f.x-d,f.y-d);ctx.lineTo(f.x+d,f.y+d);
+      ctx.moveTo(f.x+d,f.y-d);ctx.lineTo(f.x-d,f.y+d);
+      ctx.stroke();ctx.restore();
+    }
+  }
+  for(const p of G.pops){
+    ctx.save();
+    ctx.globalAlpha=Math.max(0,Math.min(1,p.life*1.7));
+    const grow=1+(1-p.life)*.35;
+    ctx.translate(p.x,p.y);ctx.scale(grow,grow);
+    ctx.font="900 "+Math.max(24,W*.078)+"px 'Baloo 2','Noto Sans Thai',sans-serif";
+    ctx.textAlign="center";ctx.textBaseline="middle";
+    ctx.lineJoin="round";ctx.lineWidth=8;ctx.strokeStyle="rgba(7,52,31,.9)";ctx.strokeText(p.text,0,0);
+    ctx.fillStyle="#fff3a0";ctx.fillText(p.text,0,0);
+    ctx.restore();
+  }
+  ctx.restore();
+}
+
+/* ---- end of round ---- */
+function endGame(why){
+  if(G.over)return;
+  G.over=true;G.running=false;musicPause();
+  const total=G.correct+G.wrong;
+  const acc=total?Math.round(G.correct/total*100):0;
+  const stars=(acc>=90&&G.correct>=15)?3:acc>=75?2:acc>=50?1:0;
+  const key="tvj_best_"+G.vowel.id,prev=bestFor(G.vowel.id),isBest=G.score>prev;
+  if(isBest)localStorage.setItem(key,G.score);
+  $("hud").hidden=true;$("count").hidden=true;
+  $("end").hidden=false;$("end").scrollTop=0;
+  $("medal").textContent=stars===3?"🏆":stars===2?"🎉":stars===1?"🌟":"🍃";
+  $("endTitle").textContent=stars===3?"สุดยอด! เก่งมาก":stars===2?"ทำได้ดีมาก!":stars===1?"เกือบแล้ว สู้ต่อ!":"ลองอีกครั้งนะ";
+  $("endWhy").textContent=why==="hearts"?"หัวใจหมดแล้ว 💔":"หมดเวลา 5 นาทีแล้ว ⏱️";
+  $("endScore").textContent=G.score;
+  $("endStars").textContent="⭐".repeat(stars)+"☆".repeat(3-stars);
+  $("bestTag").innerHTML=isBest&&G.score>0?'<span class="newbest">🎊 สถิติใหม่!</span>':"";
+  $("rOk").textContent=G.correct;
+  $("rNo").textContent=G.wrong;
+  $("rAcc").textContent=acc+"%";
+  $("rBest").textContent=Math.max(prev,G.score);
+  $("missBox").hidden=false;
+  $("missBox").innerHTML='<div class="row"><span>🎯 สระที่ฝึก</span><b>'+G.vowel.label+' ('+G.vowel.sym+')</b></div>'+
+    '<div class="row"><span>🍃 ปล่อยผ่านคำที่ถูก</span><b>'+G.missed+' คำ</b></div>'+
+    '<div class="row" style="display:block;text-align:center">ตัวอย่างคำ '+G.vowel.label+': '+
+      WORDS[G.vowel.id].slice(0,6).join(" · ")+'</div>';
+  if(stars>=2){sfx("win");confetti()}else sfx("over");
+  speak(G.score>0?"ได้ "+G.score+" คะแนน":"ลองใหม่อีกครั้งนะ");
+  renderVowelList();
+}
+
+/* ============ chrome ============ */
+$("againBtn").onclick=()=>startGame(G.vowel);
+$("menuBtn").onclick=()=>{$("end").hidden=true;$("start").hidden=false;renderVowelList()};
+$("backBtn").onclick=()=>{G.paused=true;$("pause").hidden=false;musicPause()};
+$("resumeBtn").onclick=()=>{$("pause").hidden=true;G.paused=false;G.last=performance.now();musicPlay()};
+$("quitBtn").onclick=()=>{
+  G.running=false;G.paused=false;musicPause();
+  $("pause").hidden=true;$("hud").hidden=true;$("count").hidden=true;$("start").hidden=false;renderVowelList();
+};
+$("tipBtn").onclick=()=>{const t=$("tipBox");t.hidden=!t.hidden;if(!t.hidden)t.scrollIntoView({behavior:"smooth",block:"nearest"})};
+$("soundBtn").onclick=()=>{
+  soundOn=!soundOn;localStorage.setItem("tvj_sound",soundOn?"1":"0");
+  $("soundBtn").textContent=soundOn?"🔊":"🔇";$("soundBtn").classList.toggle("off",!soundOn);
+  if(!soundOn&&"speechSynthesis" in window)speechSynthesis.cancel();
+};
+$("musicBtn").onclick=()=>{
+  musicOn=!musicOn;localStorage.setItem("tvj_music",musicOn?"1":"0");
+  $("musicBtn").classList.toggle("off",!musicOn);
+  if(musicOn)musicPlay();else applyMusic();
+};
+$("soundBtn").textContent=soundOn?"🔊":"🔇";
+$("soundBtn").classList.toggle("off",!soundOn);
+$("musicBtn").classList.toggle("off",!musicOn);
+document.addEventListener("visibilitychange",()=>{
+  if(document.hidden){
+    musicPause();
+    if(G.running&&!G.paused&&!G.over){G.paused=true;$("pause").hidden=false}
+  }
+});
+
+function confetti(){
+  for(let i=0;i<34;i++){
+    const e=document.createElement("i");e.className="conf";
+    e.style.background=CONF[i%CONF.length];e.style.left=(20+Math.random()*60)+"%";e.style.top="30%";
+    $("fx").appendChild(e);
+    e.animate([{transform:"translate(0,0) rotate(0)",opacity:1},
+      {transform:"translate("+((Math.random()-.5)*420)+"px,"+(140+Math.random()*300)+"px) rotate(560deg)",opacity:0}],
+      {duration:950+Math.random()*550}).onfinish=()=>e.remove();
+  }
+}
+</script>
+</body>
+</html>

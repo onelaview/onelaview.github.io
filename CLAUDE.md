@@ -77,6 +77,38 @@ tone classes. No timer; marking happens only once every letter is in a box.
   `musG.gain`, so the loop stays in step. `speak()` reads the consonant name with `lang="th-TH"`.
 - Persisted keys: `tts_best` (best percentage), `tts_sound`, `tts_music`.
 
+## Architecture of ตะลุยป่าล่าสระ (Jungle Vowel Splash)
+
+`bcc185-global/thai-vowel-jungle/index.html` — pick one of three Thai vowels (เอีย, อัว, อะ),
+then tap only the tossed fruits whose word uses it. 5 minutes, 3 hearts, no penalty for
+letting a fruit fall past.
+
+- The only **canvas** game here: `#cv` is a transparent full-screen canvas above an inline-SVG
+  jungle scene and below the DOM HUD. The HUD is `pointer-events:none` apart from its buttons,
+  so taps fall through to the canvas. Everything is laid out in CSS pixels; `resize()` rescales
+  the backing store by DPR and re-applies `setTransform`, so no coordinate conversion is needed
+  when hit-testing a `pointerdown`.
+- `WORDS` is the single source of truth and its invariant is what makes the game gradable:
+  every word in `eia`/`ua`/`a` uses **only** that vowel out of the three, and `other` (the
+  always-wrong fruits) uses none of them. Tone marks sit between the vowel parts (`รั้ว`,
+  `เลี้ยง`), so check membership on a tone-stripped copy, not with a plain `includes("ัว")`.
+  A round's distractors are the other two vowel lists plus `other` — the contrast between the
+  three taught vowels is the point.
+- One `requestAnimationFrame` loop with a `dt` clamped to 50 ms. `G.started` gates it: while the
+  3-2-1 countdown runs, `update()` returns early so the clock and spawner stay frozen, and the
+  countdown hides itself only once it goes past `-0.7`s. (Gating on `G.countdown > 0` instead
+  leaves the "ไปเลย!" overlay on screen forever, because the block stops running at zero.)
+- Fruits are ballistic: `spawn()` picks an apex as a fraction of `H` and derives the launch
+  velocity from `g`, which keeps the flight ~2.5 s — long enough for a ป.1 reader — regardless
+  of screen height. The body rotates, but `drawLabel()` draws the word upright on a white plate
+  afterwards and shrinks the font to fit `2.15 × r`, so the word is always readable.
+- A wrong tap sets `f.wrongTapped` rather than removing the fruit: it costs one heart, greys the
+  fruit and stamps an ✗, and further taps on that same fruit are ignored — otherwise a child
+  could drain all three hearts on one fruit.
+- Audio mirrors Thai Tone Sort (`musG`/`sfxG` split, lookahead scheduler) but the loop is a
+  jungle groove — tom, `shaker()` white-noise bursts and a pentatonic marimba over a 4-bar bass.
+- Persisted keys: `tvj_best_<vowel id>`, `tvj_sound`, `tvj_music`.
+
 ## Adding a game
 
 Add a card to the `projects` array in `bcc185-global/index.html` and create `bcc185-global/<slug>/index.html`. Match the existing look: gradient `#6a4cff → #00c9c9`, white rounded cards with a hard `box-shadow` offset that collapses on `:active`, `Baloo 2 / Comic Sans MS` stack, emoji `data:image/svg+xml` favicon.
