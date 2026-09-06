@@ -97,39 +97,32 @@ main>*{width:100%;max-width:560px;flex:none}
 @keyframes ok{from{transform:scale(1.05)}}
 @keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
 
-/* ---------- match mode (flip-card board) ---------- */
+/* ---------- match mode: two always-visible columns, tap a question then its answer
+   (no hidden/flipped cards — a beginning reader needs the text to stay on screen,
+   not vanish on a timer, to have any chance of sounding out pinyin in time) ---------- */
 #match>.board{flex:1 1 auto;min-height:0}
 .tools{display:grid;grid-template-columns:1fr;gap:8px}
 .tool{border:0;border-radius:18px;padding:9px 4px;background:#ffffffe6;color:var(--ink);font-weight:900;font-size:14px;
   box-shadow:0 4px 0 #2a166b55;cursor:pointer}
 .tool:active{transform:translateY(2px);box-shadow:0 2px 0 #2a166b55}
 .tool:disabled{opacity:.45;box-shadow:0 4px 0 #2a166b33}
-.board{display:grid;gap:6px;grid-auto-rows:1fr;position:relative}
-.card{perspective:600px;cursor:pointer}
-.card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .35s}
-.card.flipped .card-inner{transform:rotateY(180deg)}
-.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;
-  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 6px;overflow:hidden}
-.face.front{background:linear-gradient(160deg,#8a5cf0,#5b3fd6);box-shadow:0 5px 0 #3a1f8c,inset 0 0 0 3px #ffffff40}
-.face.front i{font-size:clamp(24px,8vw,40px);color:#ffffffc0}
-.face.back{transform:rotateY(180deg);background:var(--paper);box-shadow:0 5px 0 #d8cdb0,inset 0 0 0 3px #fff}
-.face.back .fq{font-size:9px;font-weight:900;letter-spacing:.5px;color:#fff;background:var(--red);border-radius:8px;padding:1px 7px;margin-bottom:1px}
-.face.back .fa{font-size:9px;font-weight:900;letter-spacing:.5px;color:#5c3b00;background:var(--gold);border-radius:8px;padding:1px 7px;margin-bottom:1px}
-.face.back .fn{font-size:clamp(13px,4vw,19px);font-weight:900;line-height:1.15;text-align:center;padding:0 2px}
-.face.back .fp{font-size:clamp(9px,2.6vw,12px);font-weight:750;opacity:.7;text-align:center;line-height:1.15}
-.card.matched .face.back{background:linear-gradient(160deg,#daffe6,#a4f3bc);box-shadow:0 5px 0 #4bc47d,inset 0 0 0 3px #fff}
-.card.matched{cursor:default}
-.card.wrong .face.back{animation:shake2 .4s}
-@keyframes shake2{20%,60%{transform:translateX(-4px) rotateY(180deg)}40%,80%{transform:translateX(4px) rotateY(180deg)}}
-.card.hintflash .face.front{animation:flash .5s 2}
-@keyframes flash{50%{filter:brightness(1.5)}}
-
-.toast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.85);z-index:6;
-  background:#fffffff5;border-radius:20px;padding:10px 16px;box-shadow:0 10px 0 #2a166b45;
-  font-weight:900;font-size:13px;text-align:center;line-height:1.5;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90%}
-.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
-.toast .tq{color:var(--red-d)}
-.toast .ta{color:#12703f}
+.board{display:flex;gap:8px;position:relative}
+.qacol{flex:1 1 50%;min-width:0;display:flex;flex-direction:column;gap:7px;overflow-y:auto;-webkit-overflow-scrolling:touch}
+.qaitem{border:3px solid #ffffff55;border-radius:16px;padding:7px 8px;cursor:pointer;text-align:center;
+  background:var(--paper);box-shadow:0 4px 0 #d8cdb0;transition:transform .1s}
+.qaitem .tag{font-size:9px;font-weight:900;letter-spacing:.5px;color:#fff;border-radius:8px;padding:1px 7px;display:inline-block;margin-bottom:2px}
+.qaitem.q .tag{background:var(--red)}
+.qaitem.a .tag{background:#2a9d5c}
+.qaitem .fn{font-size:clamp(12px,3.6vw,17px);font-weight:900;line-height:1.15}
+.qaitem .fp{font-size:clamp(8px,2.4vw,11px);font-weight:750;opacity:.7;line-height:1.15}
+.qaitem:active:not(.matched):not(.locked){transform:translateY(2px)}
+.qaitem.sel{border-color:var(--gold);box-shadow:0 4px 0 var(--gold-d),0 0 0 3px #ffd34e66}
+.qaitem.matched{background:linear-gradient(160deg,#daffe6,#a4f3bc);box-shadow:0 4px 0 #4bc47d;cursor:default;opacity:.85}
+.qaitem.wrong{animation:shake3 .4s}
+.qaitem.locked{cursor:default}
+@keyframes shake3{20%,60%{transform:translateX(-5px)}40%,80%{transform:translateX(5px)}}
+.qaitem.hintflash{animation:flash .5s 2}
+@keyframes flash{50%{filter:brightness(1.15) saturate(1.4)}}
 
 /* ---------- results ---------- */
 .scorebig{font-size:50px;font-weight:950;color:#3b2a86;line-height:1}
@@ -167,7 +160,7 @@ main>*{width:100%;max-width:560px;flex:none}
   <p class="subtitle">ทบทวนคำศัพท์ &amp; ประโยค บทเรียนที่ 5-8 ก่อนสอบ</p>
   <div class="panel tip">
     <div class="row">🀄 <span><b>เลือกคำตอบ</b> — ดูความหมายไทย เลือกคำจีนที่ถูกต้องจาก 4 ตัวเลือก</span></div>
-    <div class="row">🔗 <span><b>จับคู่ถาม-ตอบ</b> — เปิดไพ่หาประโยคคำถามที่ตรงกับคำตอบ</span></div>
+    <div class="row">🔗 <span><b>จับคู่ถาม-ตอบ</b> — แตะประโยคคำถามฝั่งซ้าย แล้วแตะคำตอบที่ตรงกันฝั่งขวา</span></div>
     <div class="row">📚 <span>ครอบคลุมหมวดร่างกาย สี ครอบครัว และคำทักทาย-ขอบคุณ</span></div>
   </div>
   <button class="bigbtn" id="quizBtn">🀄 เลือกคำตอบ<small>12 ข้อ</small></button>
@@ -571,41 +564,42 @@ function finishQuiz(){
 }
 
 /* =====================================================================
-   MATCH MODE — flip-card board pairing a question sentence to its answer
+   MATCH MODE — two always-visible columns (questions / answers), tap one
+   from each side to try a pair. Nothing is ever hidden or timed out, so a
+   beginning reader gets as long as they need to sound out the pinyin.
    ===================================================================== */
-const match={mode:"short",cards:[],pairsTotal:0,matched:0,tries:0,hints:2,hintsUsed:0,flipped:[],locked:false,active:false};
+const match={mode:"short",pairsChosen:[],pairsTotal:0,matched:0,tries:0,hints:2,hintsUsed:0,selQ:null,selA:null,locked:false,active:false};
 
-function buildCards(mode){
-  const n=mode==="full"?6:4;
-  const chosen=shuffle(QA).slice(0,n);
-  const cards=[];
-  chosen.forEach(p=>{
-    cards.push({pairId:p.id,role:"q",name:p.q[0],sub:p.q[1],matched:false});
-    cards.push({pairId:p.id,role:"a",name:p.a[0],sub:p.a[1],matched:false});
-  });
-  return {cards:shuffle(cards),pairsTotal:chosen.length};
-}
 function newMatch(mode){
   match.mode=mode;
-  const built=buildCards(mode);
-  match.cards=built.cards;match.pairsTotal=built.pairsTotal;
-  match.matched=0;match.tries=0;match.hints=2;match.hintsUsed=0;match.flipped=[];match.locked=false;match.active=true;
+  const n=mode==="full"?6:4;
+  match.pairsChosen=shuffle(QA).slice(0,n);
+  match.pairsTotal=match.pairsChosen.length;
+  match.matched=0;match.tries=0;match.hints=2;match.hintsUsed=0;match.selQ=null;match.selA=null;match.locked=false;match.active=true;
   $("start").hidden=true;$("matchEnd").hidden=true;$("match").hidden=false;
   $("totalN").textContent=match.pairsTotal;
+
+  const qItems=shuffle(match.pairsChosen.map(p=>({pairId:p.id,role:"q",name:p.q[0],sub:p.q[1],matched:false,el:null})));
+  const aItems=shuffle(match.pairsChosen.map(p=>({pairId:p.id,role:"a",name:p.a[0],sub:p.a[1],matched:false,el:null})));
+  match.items=[...qItems,...aItems];
+
   const board=$("board");
-  board.style.gridTemplateColumns="repeat(2,1fr)";
-  board.innerHTML=match.cards.map((c,i)=>
-    `<div class="card" data-i="${i}">
-       <div class="card-inner">
-         <div class="face front"><i>❓</i></div>
-         <div class="face back">
-           <span class="${c.role==='q'?'fq':'fa'}">${c.role==='q'?'ถาม':'ตอบ'}</span>
-           <span class="fn hz">${c.name}</span>
-           <span class="fp">${c.sub}</span>
-         </div>
-       </div>
-     </div>`).join("");
-  board.querySelectorAll(".card").forEach(el=>el.addEventListener("click",()=>flip(+el.dataset.i)));
+  board.innerHTML=`<div class="qacol" id="qCol"></div><div class="qacol" id="aCol"></div>`;
+  const qCol=$("qCol"),aCol=$("aCol");
+  qItems.forEach(it=>{
+    const b=document.createElement("button");
+    b.className="qaitem q";
+    b.innerHTML=`<span class="tag">ถาม</span><br><span class="fn hz">${it.name}</span><br><span class="fp">${it.sub}</span>`;
+    b.onclick=()=>selectItem(it,b);
+    it.el=b;qCol.appendChild(b);
+  });
+  aItems.forEach(it=>{
+    const b=document.createElement("button");
+    b.className="qaitem a";
+    b.innerHTML=`<span class="tag">ตอบ</span><br><span class="fn hz">${it.name}</span><br><span class="fp">${it.sub}</span>`;
+    b.onclick=()=>selectItem(it,b);
+    it.el=b;aCol.appendChild(b);
+  });
   musicPlay();
   renderMatch();
 }
@@ -617,55 +611,58 @@ function renderMatch(){
   $("hintBtn").disabled=!match.hints;
   $("hintBtn").textContent="💡 ใบ้ ("+match.hints+")";
 }
-function cardEl(i){return $("board").children[i]}
-function flip(i){
-  if(match.locked||!match.active)return;
-  const c=match.cards[i];
-  if(c.matched||match.flipped.includes(i))return;
-  cardEl(i).classList.add("flipped");
-  sfx("flip");speakZh(c.name);
-  match.flipped.push(i);
-  if(match.flipped.length===2)checkPair();
+function selectItem(it,el){
+  if(!match.active||match.locked||it.matched)return;
+  speakZh(it.name);
+  if(it.role==="q"){
+    if(match.selQ===it){match.selQ=null;el.classList.remove("sel");return}
+    if(match.selQ)match.selQ.el.classList.remove("sel");
+    match.selQ=it;el.classList.add("sel");
+  }else{
+    if(match.selA===it){match.selA=null;el.classList.remove("sel");return}
+    if(match.selA)match.selA.el.classList.remove("sel");
+    match.selA=it;el.classList.add("sel");
+  }
+  sfx("flip");
+  if(match.selQ&&match.selA)checkPair();
 }
 function checkPair(){
   match.locked=true;match.tries++;
-  const [a,b]=match.flipped,ca=match.cards[a],cb=match.cards[b];
-  if(ca.pairId===cb.pairId&&ca.role!==cb.role){
-    ca.matched=cb.matched=true;
-    cardEl(a).classList.add("matched");cardEl(b).classList.add("matched");
+  const q=match.selQ,a=match.selA;
+  if(q.pairId===a.pairId){
+    q.matched=a.matched=true;
+    q.el.classList.remove("sel");a.el.classList.remove("sel");
+    q.el.classList.add("matched");a.el.classList.add("matched");
     match.matched++;
     sfx("good");buzz(15);
-    const pair=QA.find(p=>p.id===ca.pairId);
-    showToast(pair);
-    match.flipped=[];match.locked=false;renderMatch();
-    if(match.matched===match.pairsTotal)setTimeout(finishMatch,900);
+    match.selQ=null;match.selA=null;match.locked=false;renderMatch();
+    if(match.matched===match.pairsTotal)setTimeout(finishMatch,700);
   }else{
     sfx("bad");buzz([10,40,10]);
-    cardEl(a).classList.add("wrong");cardEl(b).classList.add("wrong");
+    q.el.classList.add("wrong");a.el.classList.add("wrong");
     setTimeout(()=>{
-      cardEl(a).classList.remove("flipped","wrong");cardEl(b).classList.remove("flipped","wrong");
-      match.flipped=[];match.locked=false;renderMatch();
-    },900);
+      q.el.classList.remove("sel","wrong");a.el.classList.remove("sel","wrong");
+      match.selQ=null;match.selA=null;match.locked=false;renderMatch();
+    },700);
   }
-}
-let toastTimer=null;
-function showToast(pair){
-  const t=$("board").querySelector(".toast")||(()=>{const d=document.createElement("div");d.className="toast";$("board").appendChild(d);return d})();
-  t.innerHTML=`<div class="tq hz">${pair.q[0]}</div><div class="ta hz">${pair.a[0]}</div>`;
-  t.classList.add("show");
-  clearTimeout(toastTimer);
-  toastTimer=setTimeout(()=>t.classList.remove("show"),1500);
 }
 function useHint(){
   if(!match.hints||match.locked)return;
-  const open=[...new Set(match.cards.filter(c=>!c.matched).map(c=>c.pairId))];
+  const open=match.items.filter(it=>!it.matched);
   if(!open.length)return;
-  const pairId=open[Math.floor(Math.random()*open.length)];
-  const idxs=match.cards.map((c,i)=>c.pairId===pairId?i:-1).filter(i=>i>=0);
+  const pairId=open[Math.floor(Math.random()*open.length)].pairId;
+  const [q,a]=[match.items.find(it=>it.pairId===pairId&&it.role==="q"),match.items.find(it=>it.pairId===pairId&&it.role==="a")];
   match.hints--;match.hintsUsed++;renderMatch();
-  idxs.forEach(i=>cardEl(i).classList.add("hintflash"));
+  q.el.classList.add("hintflash");a.el.classList.add("hintflash");
   sfx("good");
-  setTimeout(()=>idxs.forEach(i=>cardEl(i)&&cardEl(i).classList.remove("hintflash")),1100);
+  setTimeout(()=>{
+    q.el.classList.remove("hintflash");a.el.classList.remove("hintflash");
+    if(!q.matched&&!a.matched){
+      q.matched=a.matched=true;q.el.classList.add("matched");a.el.classList.add("matched");
+      match.matched++;renderMatch();
+      if(match.matched===match.pairsTotal)setTimeout(finishMatch,500);
+    }
+  },900);
 }
 function finishMatch(){
   match.active=false;musicPause();
@@ -682,11 +679,8 @@ function finishMatch(){
   $("matchRTries").textContent=match.tries;
   $("matchRHint").textContent=match.hintsUsed;
   $("matchRBest").textContent=best+"%";
-  const usedIds=[...new Set(match.cards.map(c=>c.pairId))];
-  $("pairlist").innerHTML=usedIds.map(id=>{
-    const p=QA.find(x=>x.id===id);
-    return `<div class="pr"><span class="pq hz">${p.q[0]}</span><span class="pa hz">${p.a[0]}</span></div>`;
-  }).join("");
+  $("pairlist").innerHTML=match.pairsChosen.map(p=>
+    `<div class="pr"><span class="pq hz">${p.q[0]}</span><span class="pa hz">${p.a[0]}</span></div>`).join("");
   if(stars>=2){sfx("win");confetti()}
   speak(pct===100?"จับคู่ครบทุกคู่เลย เก่งมาก":"จับคู่ครบแล้ว เก่งมาก");
   showBest();
