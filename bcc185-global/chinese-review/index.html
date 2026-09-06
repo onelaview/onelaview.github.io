@@ -1,0 +1,708 @@
+<!doctype html>
+<html lang="th">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#8a1f1f">
+<title>汉语总复习 · Chinese Review</title>
+<link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>📝</text></svg>">
+<style>
+:root{
+  --ink:#2b2140;--red:#e6483c;--red-d:#7a1712;--gold:#ffd34e;--gold-d:#c9810c;
+  --paper:#fffaf3;--safe:env(safe-area-inset-bottom,0px);--top:env(safe-area-inset-top,0px);
+}
+*{box-sizing:border-box;-webkit-tap-highlight-color:transparent;-webkit-user-select:none;user-select:none}
+html,body{height:100%}
+body{margin:0;overflow:hidden;color:var(--ink);
+  font-family:"Baloo 2","Noto Sans Thai","Sarabun","Leelawadee UI","Thonburi","Comic Sans MS",system-ui,sans-serif;
+  background:linear-gradient(160deg,#6a4cff 0%,#8a5cf0 45%,#00c9c9 100%)}
+button,a{font:inherit}
+.hz{font-family:"PingFang SC","Heiti SC","Microsoft YaHei","Noto Sans SC","Noto Sans CJK SC",sans-serif}
+
+#bg{position:fixed;inset:0;overflow:hidden;pointer-events:none;z-index:0}
+#bg span{position:absolute;opacity:.16;animation:float 16s ease-in-out infinite}
+#bg span.emo{font-size:clamp(38px,11vw,72px)}
+#bg span.hz{color:#fff;font-weight:900;font-size:clamp(46px,13vw,110px)}
+#bg span:nth-child(1){left:-2%;top:5%}
+#bg span:nth-child(2){right:0%;top:16%;animation-delay:-4s}
+#bg span:nth-child(3){left:8%;bottom:22%;animation-delay:-9s}
+#bg span:nth-child(4){right:6%;bottom:6%;animation-delay:-12s}
+#bg span:nth-child(5){left:42%;top:46%;animation-delay:-6s}
+#bg span:nth-child(6){left:70%;top:2%;animation-delay:-2s}
+@keyframes float{50%{transform:translateY(-28px) rotate(8deg)}}
+
+/* ---------- overlays (start / results) ---------- */
+.overlay{position:fixed;inset:0;z-index:5;display:flex;flex-direction:column;align-items:center;justify-content:flex-start;
+  text-align:center;gap:10px;padding:calc(var(--top) + 16px) 16px calc(var(--safe) + 22px);overflow-y:auto;-webkit-overflow-scrolling:touch}
+.overlay[hidden],main[hidden],[hidden]{display:none!important}
+.overlay>*{flex:none}
+.spacer{flex:1 1 auto;min-height:0}
+.mascot{font-size:clamp(44px,13vw,72px);line-height:1;animation:bob 2.4s ease-in-out infinite}
+@keyframes bob{50%{transform:translateY(-9px) rotate(4deg)}}
+h1{margin:0;font-size:clamp(28px,8vw,46px);line-height:1.1;
+  background:linear-gradient(150deg,#ffd34e,#ff8a3d 55%,#e6483c);-webkit-background-clip:text;background-clip:text;color:transparent;
+  text-shadow:0 3px 0 rgba(0,0,0,.08)}
+.subtitle{margin:0;color:#fff;font-weight:800;font-size:clamp(13px,3.4vw,18px);opacity:.96}
+.panel{width:min(94vw,420px);background:#fffffff2;border-radius:24px;padding:12px 16px;box-shadow:0 8px 0 #2a166b3d;text-align:left}
+.tip{font-size:13px;line-height:1.5;font-weight:700}
+.tip .row{padding:6px 0;border-bottom:1px dashed #e2dcf0;display:flex;justify-content:flex-start;gap:8px;align-items:flex-start}
+.tip .row:last-child{border:0}
+.bigbtn{border:0;border-radius:24px;padding:13px 26px;font-size:19px;font-weight:900;cursor:pointer;width:min(94vw,420px);
+  background:linear-gradient(160deg,#ffe27a,var(--gold));color:#5c3b00;box-shadow:0 7px 0 var(--gold-d)}
+.bigbtn:active{transform:translateY(4px);box-shadow:0 3px 0 var(--gold-d)}
+.bigbtn.alt{background:#fff;color:var(--ink);box-shadow:0 7px 0 #2a166b55}
+.bigbtn.red{background:linear-gradient(160deg,#ff7a6b,var(--red));color:#fff;box-shadow:0 7px 0 var(--red-d)}
+.bigbtn small{display:block;font-size:12px;font-weight:800;opacity:.75}
+.hublink{color:#fff;font-weight:850;text-decoration:none;padding:4px}
+.bestline{color:#fff;font-weight:850;font-size:12px;opacity:.92}
+
+/* ---------- shared game chrome ---------- */
+main{position:fixed;inset:0;z-index:2;display:flex;flex-direction:column;align-items:center;gap:7px;
+  padding:calc(var(--top) + 7px) 10px calc(var(--safe) + 10px)}
+main>*{width:100%;max-width:560px;flex:none}
+.top{display:flex;align-items:center;justify-content:space-between;gap:7px}
+.iconbtn{border:0;background:#fff;color:var(--ink);width:42px;height:42px;border-radius:15px;box-shadow:0 4px 0 #2a166b55;font-size:18px;font-weight:900;cursor:pointer}
+.iconbtn:active{transform:translateY(2px);box-shadow:0 2px 0 #2a166b55}
+.iconbtn.off{opacity:.45}
+.iconbtn:disabled{opacity:.35}
+.topr{display:flex;gap:7px;flex:none}
+.chip{background:#fff;border-radius:15px;box-shadow:0 4px 0 #2a166b55;padding:8px 14px;font-weight:900;font-size:15px}
+.meta{display:flex;justify-content:space-between;color:#fff;font-size:13px;font-weight:900;text-shadow:0 2px #2a166b55;padding:0 3px}
+.pbar{height:12px;border-radius:20px;overflow:hidden;background:#ffffff55;box-shadow:inset 0 2px 4px #2a166b55}
+.pfill{height:100%;width:0;border-radius:20px;background:linear-gradient(90deg,var(--gold),#ff8a3d);transition:width .3s ease}
+
+/* ---------- quiz mode ---------- */
+#quiz>.stage{flex:1.05 1 45%}
+#quiz>.choices{flex:1.3 1 55%}
+.stage{flex:1 1 auto;min-height:0;display:flex;flex-direction:column;align-items:center;justify-content:center;gap:6px}
+#card{background:var(--paper);border-radius:26px;box-shadow:0 9px 0 #2a166b45;padding:14px 22px 16px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;
+  border:5px solid var(--gold);min-width:min(80vw,300px);animation:pop .28s ease}
+@keyframes pop{from{transform:scale(.7) rotate(-6deg);opacity:0}}
+.c-emoji{font-size:clamp(28px,8vw,42px);line-height:1}
+.c-swatch{width:clamp(46px,13vw,70px);height:clamp(46px,13vw,70px);border-radius:16px;border:4px solid #e2dcc8;box-shadow:0 3px 0 #d8cdb0}
+.c-thai{font-size:clamp(19px,5.6vw,27px);font-weight:900;line-height:1.2;color:var(--ink);text-align:center}
+.hint{color:#fff;font-size:clamp(12px,3.3vw,15px);font-weight:850;text-shadow:0 2px #2a166b55;text-align:center;line-height:1.3}
+
+.choices{display:flex;flex-direction:column;gap:8px;justify-content:center}
+.choice{border:4px solid #ffe6a3;border-radius:20px;padding:9px 10px;color:var(--gold);
+  background:linear-gradient(165deg,#f05a4d,var(--red-d));box-shadow:0 6px 0 var(--red-d);
+  cursor:pointer;transition:transform .12s,filter .12s;overflow:hidden;display:flex;flex-direction:column;gap:1px}
+.choice .hz{font-size:clamp(22px,7.5vw,32px);font-weight:900;line-height:1.15}
+.choice .py{font-size:clamp(11px,3vw,14px);font-weight:800;opacity:.9}
+.choice:active:not(:disabled){transform:translateY(3px)}
+.choice:disabled{cursor:default}
+.choice.good{background:linear-gradient(165deg,#8dff9d,#20c46a);color:#0d3d22;box-shadow:0 6px 0 #128047;border-color:#c8ffd4;animation:ok .35s ease}
+.choice.bad{animation:shake .4s;opacity:.5;filter:grayscale(.4)}
+@keyframes ok{from{transform:scale(1.05)}}
+@keyframes shake{20%,60%{transform:translateX(-8px)}40%,80%{transform:translateX(8px)}}
+
+/* ---------- match mode (flip-card board) ---------- */
+#match>.board{flex:1 1 auto;min-height:0}
+.tools{display:grid;grid-template-columns:1fr;gap:8px}
+.tool{border:0;border-radius:18px;padding:9px 4px;background:#ffffffe6;color:var(--ink);font-weight:900;font-size:14px;
+  box-shadow:0 4px 0 #2a166b55;cursor:pointer}
+.tool:active{transform:translateY(2px);box-shadow:0 2px 0 #2a166b55}
+.tool:disabled{opacity:.45;box-shadow:0 4px 0 #2a166b33}
+.board{display:grid;gap:6px;grid-auto-rows:1fr;position:relative}
+.card{perspective:600px;cursor:pointer}
+.card-inner{position:relative;width:100%;height:100%;transform-style:preserve-3d;transition:transform .35s}
+.card.flipped .card-inner{transform:rotateY(180deg)}
+.face{position:absolute;inset:0;backface-visibility:hidden;-webkit-backface-visibility:hidden;border-radius:14px;
+  display:flex;flex-direction:column;align-items:center;justify-content:center;gap:2px;padding:4px 6px;overflow:hidden}
+.face.front{background:linear-gradient(160deg,#8a5cf0,#5b3fd6);box-shadow:0 5px 0 #3a1f8c,inset 0 0 0 3px #ffffff40}
+.face.front i{font-size:clamp(24px,8vw,40px);color:#ffffffc0}
+.face.back{transform:rotateY(180deg);background:var(--paper);box-shadow:0 5px 0 #d8cdb0,inset 0 0 0 3px #fff}
+.face.back .fq{font-size:9px;font-weight:900;letter-spacing:.5px;color:#fff;background:var(--red);border-radius:8px;padding:1px 7px;margin-bottom:1px}
+.face.back .fa{font-size:9px;font-weight:900;letter-spacing:.5px;color:#5c3b00;background:var(--gold);border-radius:8px;padding:1px 7px;margin-bottom:1px}
+.face.back .fn{font-size:clamp(13px,4vw,19px);font-weight:900;line-height:1.15;text-align:center;padding:0 2px}
+.face.back .fp{font-size:clamp(9px,2.6vw,12px);font-weight:750;opacity:.7;text-align:center;line-height:1.15}
+.card.matched .face.back{background:linear-gradient(160deg,#daffe6,#a4f3bc);box-shadow:0 5px 0 #4bc47d,inset 0 0 0 3px #fff}
+.card.matched{cursor:default}
+.card.wrong .face.back{animation:shake2 .4s}
+@keyframes shake2{20%,60%{transform:translateX(-4px) rotateY(180deg)}40%,80%{transform:translateX(4px) rotateY(180deg)}}
+.card.hintflash .face.front{animation:flash .5s 2}
+@keyframes flash{50%{filter:brightness(1.5)}}
+
+.toast{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%) scale(.85);z-index:6;
+  background:#fffffff5;border-radius:20px;padding:10px 16px;box-shadow:0 10px 0 #2a166b45;
+  font-weight:900;font-size:13px;text-align:center;line-height:1.5;opacity:0;pointer-events:none;transition:opacity .2s,transform .2s;max-width:90%}
+.toast.show{opacity:1;transform:translate(-50%,-50%) scale(1)}
+.toast .tq{color:var(--red-d)}
+.toast .ta{color:#12703f}
+
+/* ---------- results ---------- */
+.scorebig{font-size:50px;font-weight:950;color:#3b2a86;line-height:1}
+.stars{font-size:26px;letter-spacing:2px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:5px 0;font-weight:800;font-size:14px;border-bottom:1px dashed #e2dcf0}
+.row:last-child{border:0}
+.review{width:min(94vw,420px);background:#fffffff2;border-radius:24px;padding:12px;box-shadow:0 8px 0 #2a166b3d;text-align:left}
+.review h3{margin:2px 0 8px;font-size:15px;text-align:center}
+.misses{max-height:28vh;overflow-y:auto;font-size:13px;font-weight:750;line-height:1.5}
+.misses div{padding:5px 2px;border-bottom:1px dashed #e2dcf0;display:flex;align-items:center;gap:9px}
+.misses .mhz{min-width:34px;height:34px;padding:0 5px;font-size:17px;white-space:nowrap;background:#ffdede;color:#b31f3d;flex:none;border-radius:11px;
+  display:flex;align-items:center;justify-content:center;font-weight:900}
+.pairlist{display:flex;flex-direction:column;gap:6px;max-height:32vh;overflow-y:auto}
+.pairlist .pr{display:flex;flex-direction:column;gap:1px;background:#f6f3ff;border-radius:13px;padding:6px 10px;font-size:12.5px;font-weight:750}
+.pairlist .pq{color:var(--red-d);font-weight:900}
+.pairlist .pa{color:#12703f;font-weight:900}
+.float{position:fixed;z-index:10;font-size:28px;font-weight:950;pointer-events:none;text-shadow:0 3px #0005}
+.conf{position:fixed;z-index:10;width:11px;height:11px;border-radius:3px;pointer-events:none}
+@media(max-height:680px){
+  main{gap:5px}.iconbtn{width:37px;height:37px;font-size:16px}.chip{padding:6px 11px;font-size:13px}
+  #card{padding:10px 16px 12px}.c-emoji{font-size:24px}.choice{padding:7px 8px}
+}
+</style>
+</head>
+<body>
+<div id="bg">
+  <span class="hz">福</span><span class="hz">学</span><span class="hz">家</span>
+  <span class="emo">📝</span><span class="emo">🎓</span><span class="hz">好</span>
+</div>
+
+<!-- ======= START ======= -->
+<section class="overlay" id="start">
+  <div class="mascot">🐼📝</div>
+  <h1 class="hz">汉语总复习</h1>
+  <p class="subtitle">ทบทวนคำศัพท์ &amp; ประโยค บทเรียนที่ 5-8 ก่อนสอบ</p>
+  <div class="panel tip">
+    <div class="row">🀄 <span><b>เลือกคำตอบ</b> — ดูความหมายไทย เลือกคำจีนที่ถูกต้องจาก 4 ตัวเลือก</span></div>
+    <div class="row">🔗 <span><b>จับคู่ถาม-ตอบ</b> — เปิดไพ่หาประโยคคำถามที่ตรงกับคำตอบ</span></div>
+    <div class="row">📚 <span>ครอบคลุมหมวดร่างกาย สี ครอบครัว และคำทักทาย-ขอบคุณ</span></div>
+  </div>
+  <button class="bigbtn" id="quizBtn">🀄 เลือกคำตอบ<small>12 ข้อ</small></button>
+  <button class="bigbtn alt" id="matchShortBtn">🔗 จับคู่ถาม-ตอบ<small>4 คู่ · เริ่มต้น</small></button>
+  <button class="bigbtn alt" id="matchFullBtn">🔗 จับคู่ถาม-ตอบ<small>6 คู่ · ท้าทาย</small></button>
+  <p class="bestline" id="bestLine"></p>
+  <div class="spacer"></div>
+  <a class="hublink" href="../">← All games</a>
+</section>
+
+<!-- ======= QUIZ MODE ======= -->
+<main id="quiz" hidden>
+  <div class="top">
+    <button class="iconbtn" id="quizHomeBtn" aria-label="กลับหน้าแรก">⬅</button>
+    <div class="chip">🀄 <span id="qNum">1</span>/<span id="qTotal">12</span></div>
+    <div class="topr">
+      <button class="iconbtn" id="quizMusicBtn" aria-label="เพลงประกอบ">🎵</button>
+      <button class="iconbtn" id="quizSoundBtn" aria-label="เสียง">🔊</button>
+    </div>
+  </div>
+  <div class="meta"><span id="timerLbl">⏱ 0:00</span><span id="correctLbl">✅ 0</span></div>
+  <div class="pbar"><div class="pfill" id="pfill"></div></div>
+
+  <div class="stage">
+    <div id="card">
+      <div class="c-emoji" id="cEmoji">🥛</div>
+      <div class="c-thai" id="cThai">สีแดง</div>
+    </div>
+    <p class="hint">แตะคำจีนที่ตรงกับความหมายนี้</p>
+  </div>
+
+  <div class="choices" id="choices"></div>
+</main>
+
+<!-- ======= QUIZ RESULTS ======= -->
+<section class="overlay" id="quizEnd" hidden>
+  <div class="mascot" id="quizMedal">🏆</div>
+  <h1 id="quizEndTitle" style="font-size:clamp(24px,6.5vw,36px)">เก่งมาก!</h1>
+  <div class="panel" style="text-align:center">
+    <div class="scorebig" id="quizEndScore">0</div>
+    <div class="stars" id="quizEndStars">⭐⭐⭐</div>
+    <div class="row"><span>✅ ตอบถูก</span><b id="quizROk">0 / 12</b></div>
+    <div class="row"><span>⏱ เวลาที่ใช้ทั้งหมด</span><b id="quizRTime">0:00</b></div>
+    <div class="row"><span>⚡ โบนัสความเร็ว</span><b id="quizRBonus">+0</b></div>
+    <div class="row"><span>🥇 คะแนนสูงสุด</span><b id="quizRBest">0</b></div>
+  </div>
+  <div class="review" id="quizReviewPanel" hidden>
+    <h3>คำที่ควรทบทวน</h3>
+    <div class="misses" id="quizMisses"></div>
+  </div>
+  <button class="bigbtn" id="quizAgainBtn">▶ เล่นอีกครั้ง</button>
+  <button class="bigbtn red" id="quizRetryBtn" hidden>🔁 ทบทวนเฉพาะที่พลาด</button>
+  <button class="bigbtn alt" id="quizMenuBtn">🏠 หน้าแรก</button>
+  <div class="spacer"></div>
+  <a class="hublink" href="../">← All games</a>
+</section>
+
+<!-- ======= MATCH MODE ======= -->
+<main id="match" hidden>
+  <div class="top">
+    <button class="iconbtn" id="matchHomeBtn" aria-label="กลับหน้าแรก">⬅</button>
+    <div class="chip">🔗 <span id="doneN">0</span>/<span id="totalN">0</span></div>
+    <div class="topr">
+      <button class="iconbtn" id="matchMusicBtn" aria-label="เพลงประกอบ">🎵</button>
+      <button class="iconbtn" id="matchSoundBtn" aria-label="เสียง">🔊</button>
+    </div>
+  </div>
+  <div class="meta"><span id="triesLbl">ลองไป 0 ครั้ง</span><span id="pctLbl">0%</span></div>
+  <div class="board" id="board"></div>
+  <div class="tools">
+    <button class="tool" id="hintBtn">💡 ใบ้ (2)</button>
+  </div>
+</main>
+
+<!-- ======= MATCH RESULTS ======= -->
+<section class="overlay" id="matchEnd" hidden>
+  <div class="mascot" id="matchMedal">🏆</div>
+  <h1 id="matchEndTitle">เก่งมาก!</h1>
+  <div class="panel" style="text-align:center">
+    <div class="scorebig" id="matchEndScore">0%</div>
+    <div class="stars" id="matchEndStars">⭐⭐⭐</div>
+    <div class="row"><span>🔗 คู่ทั้งหมด</span><b id="matchRPairs">0</b></div>
+    <div class="row"><span>🔁 ลองไป</span><b id="matchRTries">0</b></div>
+    <div class="row"><span>💡 ใช้คำใบ้</span><b id="matchRHint">0</b></div>
+    <div class="row"><span>🏅 สถิติสูงสุดโหมดนี้</span><b id="matchRBest">0%</b></div>
+  </div>
+  <div class="review">
+    <h3>ทบทวนคู่ถาม-ตอบ</h3>
+    <div class="pairlist" id="pairlist"></div>
+  </div>
+  <button class="bigbtn" id="matchAgainBtn">▶ เล่นโหมดนี้อีกครั้ง</button>
+  <button class="bigbtn alt" id="matchMenuBtn">🏠 หน้าแรก</button>
+  <div class="spacer"></div>
+  <a class="hublink" href="../">← All games</a>
+</section>
+
+<div id="fx"></div>
+
+<script>
+/* ============ data: vocabulary from lessons 5-8 (family, greetings, thanks)
+   plus body-parts & colours reviewed alongside them
+   [ hanzi, pinyin, thai, emoji, category, hex? ]   category: body | color | family | greet */
+const VOCAB=[
+ ["头","tóu","หัว","🧑","body"],
+ ["头发","tóufa","ผม","💇","body"],
+ ["脸","liǎn","หน้า","🙂","body"],
+ ["眼睛","yǎnjing","ตา","👀","body"],
+ ["鼻子","bízi","จมูก","👃","body"],
+ ["耳朵","ěrduo","หู","👂","body"],
+ ["嘴巴","zuǐba","ปาก","👄","body"],
+ ["手","shǒu","มือ","✋","body"],
+ ["脚","jiǎo","เท้า","🦶","body"],
+ ["红色","hóngsè","สีแดง","🔴","color","#e63946"],
+ ["黄色","huángsè","สีเหลือง","🟡","color","#ffd166"],
+ ["绿色","lǜsè","สีเขียว","🟢","color","#2a9d5c"],
+ ["蓝色","lánsè","สีฟ้า","🔵","color","#3a86ff"],
+ ["粉色","fěnsè","สีชมพู","🌸","color","#ff8fab"],
+ ["橙色","chéngsè","สีส้ม","🟠","color","#ff8c42"],
+ ["白色","báisè","สีขาว","⚪","color","#ffffff"],
+ ["黑色","hēisè","สีดำ","⚫","color","#111111"],
+ ["紫色","zǐsè","สีม่วง","🟣","color","#8a4fff"],
+ ["爸爸","bàba","พ่อ","👨","family"],
+ ["妈妈","māma","แม่","👩","family"],
+ ["哥哥","gēge","พี่ชาย","👦","family"],
+ ["姐姐","jiějie","พี่สาว","👧","family"],
+ ["弟弟","dìdi","น้องชาย","🧒","family"],
+ ["妹妹","mèimei","น้องสาว","👶","family"],
+ ["你好","nǐhǎo","สวัสดี","😊","greet"],
+ ["你早","nǐzǎo","อรุณสวัสดิ์ (เป็นกันเอง)","🌅","greet"],
+ ["您早","nínzǎo","อรุณสวัสดิ์ (สุภาพ)","🙇","greet"],
+ ["再见","zàijiàn","ลาก่อน","👋","greet"],
+ ["谢谢你","xièxienǐ","ขอบคุณ","🙏","greet"],
+ ["不用谢","búyòngxiè","ไม่เป็นไร (ตอบขอบคุณ)","😊","greet"],
+ ["对不起","duìbuqǐ","ขอโทษ","😳","greet"],
+ ["没关系","méiguānxi","ไม่เป็นไร (ตอบขอโทษ)","👌","greet"]
+];
+/* question ↔ answer sentence pairs, straight from the lesson 5-8 workbook */
+const QA=[
+ {id:1,q:["你叫什么名字？","nǐ jiào shénme míngzi"],a:["我叫木木。","wǒ jiào mùmu"]},
+ {id:2,q:["你几岁？","nǐ jǐ suì"],a:["我七岁。","wǒ qī suì"]},
+ {id:3,q:["你有弟弟吗？","nǐ yǒu dìdi ma"],a:["我没有弟弟。","wǒ méiyǒu dìdi"]},
+ {id:4,q:["你有几个妹妹？","nǐ yǒu jǐ ge mèimei"],a:["我有两个妹妹。","wǒ yǒu liǎng ge mèimei"]},
+ {id:5,q:["现在几点？","xiànzài jǐ diǎn"],a:["现在九点。","xiànzài jiǔ diǎn"]},
+ {id:6,q:["你家有几口人？","nǐ jiā yǒu jǐ kǒu rén"],a:["我家有五口人。","wǒ jiā yǒu wǔ kǒu rén"]},
+ {id:7,q:["你家有谁？","nǐ jiā yǒu shéi"],a:["爸爸、妈妈和我。","bàba、māma hé wǒ"]},
+ {id:8,q:["你爱你的家人吗？","nǐ ài nǐ de jiārén ma"],a:["我爱我的家人。","wǒ ài wǒ de jiārén"]},
+ {id:9,q:["谢谢你！","xièxie nǐ"],a:["不用谢。","bú yòng xiè"]},
+ {id:10,q:["对不起！","duì bu qǐ"],a:["没关系。","méi guānxi"]}
+];
+const ROUNDS=12;
+const CONF=["#ffd34e","#ff5f8f","#4f8cff","#7dffb0","#c08cff"];
+const $=id=>document.getElementById(id);
+const shuffle=a=>{a=a.slice();for(let i=a.length-1;i;i--){const j=Math.floor(Math.random()*(i+1));[a[i],a[j]]=[a[j],a[i]]}return a};
+const fmtTime=s=>Math.floor(s/60)+":"+String(s%60).padStart(2,"0");
+
+/* ============ sound: everything is synthesised, nothing to download ============ */
+let AC=null,musG=null,sfxG=null,musTimer=null,musStep=0,musNext=0;
+let soundOn=localStorage.getItem("cvr_sound")!=="0",musicOn=localStorage.getItem("cvr_music")!=="0",musicWanted=false;
+function ac(){
+  if(!AC){
+    const C=window.AudioContext||window.webkitAudioContext;if(!C)return null;
+    AC=new C();
+    const master=AC.createGain();master.gain.value=.9;master.connect(AC.destination);
+    musG=AC.createGain();musG.gain.value=0;musG.connect(master);
+    sfxG=AC.createGain();sfxG.gain.value=.9;sfxG.connect(master);
+  }
+  if(AC.state==="suspended")AC.resume();
+  return AC;
+}
+const NOTE=n=>440*Math.pow(2,(n-69)/12);
+function tone(freq,t,dur,type,peak,dest){
+  const o=AC.createOscillator(),g=AC.createGain();
+  o.type=type;o.frequency.setValueAtTime(freq,t);
+  g.gain.setValueAtTime(.0001,t);g.gain.exponentialRampToValueAtTime(peak,t+.02);
+  g.gain.exponentialRampToValueAtTime(.0001,t+dur);
+  o.connect(g);g.connect(dest||sfxG);o.start(t);o.stop(t+dur+.05);
+}
+function sfx(kind){
+  if(!soundOn||!ac())return;const t=AC.currentTime;
+  if(kind==="flip")tone(NOTE(74),t,.1,"sine",.2);
+  else if(kind==="good")[72,76,79].forEach((n,i)=>tone(NOTE(n),t+i*.07,.3,"sine",.2));
+  else if(kind==="bad"){
+    const o=AC.createOscillator(),g=AC.createGain();o.type="sawtooth";
+    o.frequency.setValueAtTime(210,t);o.frequency.exponentialRampToValueAtTime(85,t+.3);
+    g.gain.setValueAtTime(.14,t);g.gain.exponentialRampToValueAtTime(.0001,t+.32);
+    o.connect(g);g.connect(sfxG);o.start(t);o.stop(t+.35);
+  }
+  else if(kind==="win")[72,76,79,84,88,91].forEach((n,i)=>tone(NOTE(n),t+i*.1,.55,"triangle",.22));
+}
+/* a soft pentatonic loop (guzheng-style pluck + a distant temple-bell drone) */
+const SCALE=[60,62,64,67,69,72,74,76,79,81];
+const MELIDX=[0,2,4,3,2,4,6,4,2,4,6,8,7,6,4,2];
+const BEAT=.4;
+function musicTick(){
+  if(!AC)return;
+  while(musNext<AC.currentTime+.4){
+    const step=musStep%MELIDX.length;
+    tone(NOTE(SCALE[MELIDX[step]]),musNext,.5,"triangle",.09,musG);
+    if(step%8===0)tone(NOTE(48),musNext,3.2,"sine",.07,musG);
+    musNext+=BEAT;musStep++;
+  }
+}
+function applyMusic(){
+  if(!AC)return;
+  musG.gain.cancelScheduledValues(AC.currentTime);
+  musG.gain.linearRampToValueAtTime(musicOn&&musicWanted?.5:0,AC.currentTime+.7);
+}
+function musicPlay(){musicWanted=true;if(!ac())return;if(!musTimer){musNext=AC.currentTime+.15;musStep=0;musTimer=setInterval(musicTick,70)}applyMusic()}
+function musicPause(){musicWanted=false;applyMusic()}
+
+/* speech: Thai prompt / Thai results always fine to read; Chinese text uses a zh voice when one exists */
+let thVoice=null,zhVoice=null;
+function pickVoices(){
+  try{
+    const vs=speechSynthesis.getVoices()||[];
+    thVoice=vs.find(v=>/^th/i.test(v.lang))||null;
+    zhVoice=vs.find(v=>/^zh/i.test(v.lang))||null;
+  }catch(e){}
+}
+if("speechSynthesis" in window){pickVoices();speechSynthesis.onvoiceschanged=pickVoices}
+function speak(text,lang,voice,rate){
+  if(!soundOn||!("speechSynthesis" in window))return;
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(text);
+    u.lang=lang||"th-TH";if(voice)u.voice=voice;u.rate=rate||.85;u.pitch=1.05;
+    speechSynthesis.speak(u);
+  }catch(e){}
+}
+function speakZh(text){speak(text,"zh-CN",zhVoice,.8)}
+function buzz(p){try{navigator.vibrate&&navigator.vibrate(p)}catch(e){}}
+
+/* ============ shared chrome: sound/music toggle buttons, wired per screen ============ */
+function wireToggles(soundBtn,musicBtn){
+  soundBtn.textContent=soundOn?"🔊":"🔇";soundBtn.classList.toggle("off",!soundOn);
+  musicBtn.classList.toggle("off",!musicOn);
+  soundBtn.onclick=()=>{
+    soundOn=!soundOn;localStorage.setItem("cvr_sound",soundOn?"1":"0");
+    document.querySelectorAll("#quizSoundBtn,#matchSoundBtn").forEach(b=>{b.textContent=soundOn?"🔊":"🔇";b.classList.toggle("off",!soundOn)});
+    if(!soundOn&&"speechSynthesis" in window)speechSynthesis.cancel();
+  };
+  musicBtn.onclick=()=>{
+    musicOn=!musicOn;localStorage.setItem("cvr_music",musicOn?"1":"0");
+    document.querySelectorAll("#quizMusicBtn,#matchMusicBtn").forEach(b=>b.classList.toggle("off",!musicOn));
+    if(musicOn)musicPlay();else applyMusic();
+  };
+}
+wireToggles($("quizSoundBtn"),$("quizMusicBtn"));
+wireToggles($("matchSoundBtn"),$("matchMusicBtn"));
+document.addEventListener("visibilitychange",()=>{if(document.hidden)musicPause();else if(quiz.active||match.active)musicPlay()});
+
+function goHome(){$("quiz").hidden=$("match").hidden=$("quizEnd").hidden=$("matchEnd").hidden=true;$("start").hidden=false;musicPause();showBest()}
+function bestFor(mode){return +(localStorage.getItem("cvr_best_"+mode)||0)}
+function showBest(){
+  const q=bestFor("quiz"),s=bestFor("short"),f=bestFor("full");
+  const parts=[];
+  if(q)parts.push("เลือกคำตอบ "+q+" คะแนน");
+  if(s||f)parts.push("จับคู่ "+(s||0)+"%/"+(f||0)+"%");
+  $("bestLine").textContent=parts.length?"🏅 สถิติ: "+parts.join(" · "):"";
+}
+showBest();
+
+/* =====================================================================
+   QUIZ MODE — Thai meaning + picture → pick the matching hanzi (4 choices)
+   ===================================================================== */
+const quiz={pool:[],idx:0,log:[],correct:0,startedAt:0,active:false,q:null};
+function pickChoices(item){
+  const sameCat=shuffle(VOCAB.filter(v=>v!==item&&v[4]===item[4]));
+  let distractors=sameCat.slice(0,3);
+  if(distractors.length<3){
+    const more=shuffle(VOCAB.filter(v=>v!==item&&!distractors.includes(v))).slice(0,3-distractors.length);
+    distractors=distractors.concat(more);
+  }
+  return shuffle([item,...distractors]);
+}
+function newQuiz(pool){
+  quiz.pool=pool?pool.slice(0,ROUNDS):shuffle(VOCAB).slice(0,ROUNDS);
+  quiz.idx=0;quiz.log=[];quiz.correct=0;quiz.startedAt=Date.now();quiz.active=true;
+  $("start").hidden=true;$("quizEnd").hidden=true;$("quiz").hidden=false;
+  $("qTotal").textContent=quiz.pool.length;
+  musicPlay();
+  clearInterval(quizTimerInt);quizTimerInt=setInterval(updateQuizTimer,500);updateQuizTimer();
+  renderQuizQuestion();
+}
+let quizTimerInt=null;
+function updateQuizTimer(){
+  if(!quiz.active)return;
+  $("timerLbl").textContent="⏱ "+fmtTime(Math.floor((Date.now()-quiz.startedAt)/1000));
+}
+function renderQuizQuestion(){
+  const item=quiz.pool[quiz.idx];
+  const choices=pickChoices(item);
+  const correctIdx=choices.indexOf(item);
+  quiz.q={item,choices,correctIdx,missed:false,resolved:false};
+
+  $("qNum").textContent=quiz.idx+1;
+  $("correctLbl").textContent="✅ "+quiz.correct;
+  $("pfill").style.width=Math.round(quiz.idx/quiz.pool.length*100)+"%";
+  const card=$("card");
+  if(item[4]==="color"){
+    card.innerHTML=`<div class="c-swatch" style="background:${item[5]}"></div><div class="c-thai">${item[2]}</div>`;
+  }else{
+    card.innerHTML=`<div class="c-emoji">${item[3]}</div><div class="c-thai">${item[2]}</div>`;
+  }
+  card.style.animation="none";void card.offsetWidth;card.style.animation="";
+
+  const box=$("choices");box.innerHTML="";
+  choices.forEach((c,i)=>{
+    const b=document.createElement("button");
+    b.className="choice";
+    b.innerHTML=`<span class="hz">${c[0]}</span><span class="py">${c[1]}</span>`;
+    b.onclick=()=>pickAnswer(i,b);
+    box.appendChild(b);
+  });
+  setTimeout(()=>speak(item[2]),350);
+}
+function pickAnswer(i,btn){
+  const q=quiz.q;
+  if(!q||q.resolved)return;
+  if(i===q.correctIdx){
+    q.resolved=true;
+    btn.classList.add("good");
+    [...$("choices").children].forEach(c=>c.disabled=true);
+    if(!q.missed)quiz.correct++;
+    quiz.log.push({item:q.item,missed:q.missed});
+    sfx("good");buzz(15);burst(btn,["⭐","🎉","✨","👏"][Math.floor(Math.random()*4)]);
+    setTimeout(()=>speakHanziThenAdvance(q.item[0]),250);
+  }else{
+    q.missed=true;
+    btn.classList.add("bad");btn.disabled=true;
+    sfx("bad");buzz(30);
+  }
+}
+function nextOrFinishQuiz(){
+  quiz.idx++;
+  if(quiz.idx>=quiz.pool.length)finishQuiz();else renderQuizQuestion();
+}
+function speakHanziThenAdvance(hanzi){
+  const PAUSE=350,MIN_WAIT=900,FALLBACK=2200;
+  let done=false;
+  const go=()=>{if(done)return;done=true;clearTimeout(fallback);nextOrFinishQuiz()};
+  const fallback=setTimeout(go,FALLBACK);
+  if(!soundOn||!("speechSynthesis" in window)){setTimeout(go,MIN_WAIT);return}
+  try{
+    speechSynthesis.cancel();
+    const u=new SpeechSynthesisUtterance(hanzi);
+    u.lang="zh-CN";if(zhVoice)u.voice=zhVoice;u.rate=.8;u.pitch=1.05;
+    u.onend=()=>setTimeout(go,PAUSE);
+    u.onerror=()=>setTimeout(go,MIN_WAIT);
+    speechSynthesis.speak(u);
+  }catch(e){setTimeout(go,MIN_WAIT)}
+}
+function burst(anchor,emoji){
+  const r=anchor.getBoundingClientRect();
+  const e=document.createElement("div");
+  e.className="float";e.textContent=emoji;e.style.color=getComputedStyle(document.documentElement).getPropertyValue("--gold");
+  e.style.left=(r.left+r.width/2-14)+"px";e.style.top=(r.top+r.height/2-14)+"px";
+  $("fx").appendChild(e);
+  e.animate([{transform:"translateY(0)",opacity:1},{transform:"translateY(-70px)",opacity:0}],{duration:750}).onfinish=()=>e.remove();
+}
+function confetti(){
+  for(let i=0;i<34;i++){
+    const e=document.createElement("i");e.className="conf";
+    e.style.background=CONF[i%CONF.length];e.style.left=(20+Math.random()*60)+"%";e.style.top="30%";
+    $("fx").appendChild(e);
+    e.animate([{transform:"translate(0,0) rotate(0)",opacity:1},
+      {transform:`translate(${(Math.random()-.5)*420}px,${140+Math.random()*300}px) rotate(560deg)`,opacity:0}],
+      {duration:950+Math.random()*550}).onfinish=()=>e.remove();
+  }
+}
+function finishQuiz(){
+  quiz.active=false;clearInterval(quizTimerInt);musicPause();
+  const elapsedS=Math.max(0,Math.round((Date.now()-quiz.startedAt)/1000));
+  const total=quiz.pool.length,ok=quiz.correct,pct=Math.round(ok/total*100);
+  const stars=pct>=95?3:pct>=80?2:pct>=55?1:0;
+  const MAX_BONUS=500,WINDOW_S=600;
+  const bonus=Math.round(MAX_BONUS*Math.max(0,1-elapsedS/WINDOW_S));
+  const score=ok*100+bonus;
+  const best=Math.max(score,bestFor("quiz"));localStorage.setItem("cvr_best_quiz",best);
+
+  $("quiz").hidden=true;$("quizEnd").hidden=false;$("quizEnd").scrollTop=0;
+  $("quizMedal").textContent=stars===3?"🏆":stars===2?"🎉":stars===1?"🌟":"📖";
+  $("quizEndTitle").textContent=stars===3?"เก่งมาก สุดยอด!":stars===2?"ทำได้ดีมาก!":stars===1?"เก่งขึ้นแล้ว สู้ต่อ!":"ลองอีกครั้งนะ";
+  $("quizEndScore").textContent=score;
+  $("quizEndStars").textContent="⭐".repeat(stars)+"☆".repeat(3-stars);
+  $("quizROk").textContent=ok+" / "+total;
+  $("quizRTime").textContent=fmtTime(elapsedS);
+  $("quizRBonus").textContent="+"+bonus;
+  $("quizRBest").textContent=best;
+
+  const misses=quiz.log.filter(l=>l.missed);
+  $("quizReviewPanel").hidden=!misses.length;
+  $("quizRetryBtn").hidden=!misses.length;
+  if(misses.length){
+    $("quizMisses").innerHTML=misses.map(l=>
+      `<div><span class="mhz hz">${l.item[0]}</span><span>${l.item[1]} — ${l.item[2]}</span></div>`).join("");
+    $("quizRetryBtn").onclick=()=>newQuiz(shuffle(misses.map(l=>l.item)));
+  }
+  if(stars>=2){sfx("win");confetti()}else sfx("bad");
+  speak(ok===total?"ถูกทุกข้อเลย เก่งมาก":"ตอบถูก "+ok+" จาก "+total+" ข้อ");
+}
+
+/* =====================================================================
+   MATCH MODE — flip-card board pairing a question sentence to its answer
+   ===================================================================== */
+const match={mode:"short",cards:[],pairsTotal:0,matched:0,tries:0,hints:2,hintsUsed:0,flipped:[],locked:false,active:false};
+
+function buildCards(mode){
+  const n=mode==="full"?6:4;
+  const chosen=shuffle(QA).slice(0,n);
+  const cards=[];
+  chosen.forEach(p=>{
+    cards.push({pairId:p.id,role:"q",name:p.q[0],sub:p.q[1],matched:false});
+    cards.push({pairId:p.id,role:"a",name:p.a[0],sub:p.a[1],matched:false});
+  });
+  return {cards:shuffle(cards),pairsTotal:chosen.length};
+}
+function newMatch(mode){
+  match.mode=mode;
+  const built=buildCards(mode);
+  match.cards=built.cards;match.pairsTotal=built.pairsTotal;
+  match.matched=0;match.tries=0;match.hints=2;match.hintsUsed=0;match.flipped=[];match.locked=false;match.active=true;
+  $("start").hidden=true;$("matchEnd").hidden=true;$("match").hidden=false;
+  $("totalN").textContent=match.pairsTotal;
+  const board=$("board");
+  board.style.gridTemplateColumns="repeat(2,1fr)";
+  board.innerHTML=match.cards.map((c,i)=>
+    `<div class="card" data-i="${i}">
+       <div class="card-inner">
+         <div class="face front"><i>❓</i></div>
+         <div class="face back">
+           <span class="${c.role==='q'?'fq':'fa'}">${c.role==='q'?'ถาม':'ตอบ'}</span>
+           <span class="fn hz">${c.name}</span>
+           <span class="fp">${c.sub}</span>
+         </div>
+       </div>
+     </div>`).join("");
+  board.querySelectorAll(".card").forEach(el=>el.addEventListener("click",()=>flip(+el.dataset.i)));
+  musicPlay();
+  renderMatch();
+}
+function renderMatch(){
+  $("doneN").textContent=match.matched;
+  $("triesLbl").textContent="ลองไป "+match.tries+" ครั้ง";
+  const pct=match.tries?Math.min(100,Math.round(match.pairsTotal/match.tries*100)):100;
+  $("pctLbl").textContent=pct+"%";
+  $("hintBtn").disabled=!match.hints;
+  $("hintBtn").textContent="💡 ใบ้ ("+match.hints+")";
+}
+function cardEl(i){return $("board").children[i]}
+function flip(i){
+  if(match.locked||!match.active)return;
+  const c=match.cards[i];
+  if(c.matched||match.flipped.includes(i))return;
+  cardEl(i).classList.add("flipped");
+  sfx("flip");speakZh(c.name);
+  match.flipped.push(i);
+  if(match.flipped.length===2)checkPair();
+}
+function checkPair(){
+  match.locked=true;match.tries++;
+  const [a,b]=match.flipped,ca=match.cards[a],cb=match.cards[b];
+  if(ca.pairId===cb.pairId&&ca.role!==cb.role){
+    ca.matched=cb.matched=true;
+    cardEl(a).classList.add("matched");cardEl(b).classList.add("matched");
+    match.matched++;
+    sfx("good");buzz(15);
+    const pair=QA.find(p=>p.id===ca.pairId);
+    showToast(pair);
+    match.flipped=[];match.locked=false;renderMatch();
+    if(match.matched===match.pairsTotal)setTimeout(finishMatch,900);
+  }else{
+    sfx("bad");buzz([10,40,10]);
+    cardEl(a).classList.add("wrong");cardEl(b).classList.add("wrong");
+    setTimeout(()=>{
+      cardEl(a).classList.remove("flipped","wrong");cardEl(b).classList.remove("flipped","wrong");
+      match.flipped=[];match.locked=false;renderMatch();
+    },900);
+  }
+}
+let toastTimer=null;
+function showToast(pair){
+  const t=$("board").querySelector(".toast")||(()=>{const d=document.createElement("div");d.className="toast";$("board").appendChild(d);return d})();
+  t.innerHTML=`<div class="tq hz">${pair.q[0]}</div><div class="ta hz">${pair.a[0]}</div>`;
+  t.classList.add("show");
+  clearTimeout(toastTimer);
+  toastTimer=setTimeout(()=>t.classList.remove("show"),1500);
+}
+function useHint(){
+  if(!match.hints||match.locked)return;
+  const open=[...new Set(match.cards.filter(c=>!c.matched).map(c=>c.pairId))];
+  if(!open.length)return;
+  const pairId=open[Math.floor(Math.random()*open.length)];
+  const idxs=match.cards.map((c,i)=>c.pairId===pairId?i:-1).filter(i=>i>=0);
+  match.hints--;match.hintsUsed++;renderMatch();
+  idxs.forEach(i=>cardEl(i).classList.add("hintflash"));
+  sfx("good");
+  setTimeout(()=>idxs.forEach(i=>cardEl(i)&&cardEl(i).classList.remove("hintflash")),1100);
+}
+function finishMatch(){
+  match.active=false;musicPause();
+  const pct=match.tries?Math.min(100,Math.round(match.pairsTotal/match.tries*100)):100;
+  const stars=pct>=95?3:pct>=80?2:pct>=55?1:0;
+  const bestKey=match.mode,best=Math.max(pct,bestFor(bestKey));
+  localStorage.setItem("cvr_best_"+bestKey,best);
+  $("match").hidden=true;$("matchEnd").hidden=false;$("matchEnd").scrollTop=0;
+  $("matchMedal").textContent=stars===3?"🏆":stars===2?"🎉":stars===1?"🌟":"📖";
+  $("matchEndTitle").textContent=stars===3?"สุดยอด! เก่งมาก":stars===2?"ทำได้ดีมาก!":stars===1?"เกือบแล้ว สู้ต่อ!":"ลองอีกครั้งนะ";
+  $("matchEndScore").textContent=pct+"%";
+  $("matchEndStars").textContent="⭐".repeat(stars)+"☆".repeat(3-stars);
+  $("matchRPairs").textContent=match.pairsTotal;
+  $("matchRTries").textContent=match.tries;
+  $("matchRHint").textContent=match.hintsUsed;
+  $("matchRBest").textContent=best+"%";
+  const usedIds=[...new Set(match.cards.map(c=>c.pairId))];
+  $("pairlist").innerHTML=usedIds.map(id=>{
+    const p=QA.find(x=>x.id===id);
+    return `<div class="pr"><span class="pq hz">${p.q[0]}</span><span class="pa hz">${p.a[0]}</span></div>`;
+  }).join("");
+  if(stars>=2){sfx("win");confetti()}
+  speak(pct===100?"จับคู่ครบทุกคู่เลย เก่งมาก":"จับคู่ครบแล้ว เก่งมาก");
+  showBest();
+}
+
+/* ============ chrome ============ */
+$("quizBtn").onclick=()=>{ac();newQuiz()};
+$("matchShortBtn").onclick=()=>{ac();newMatch("short")};
+$("matchFullBtn").onclick=()=>{ac();newMatch("full")};
+$("quizAgainBtn").onclick=()=>newQuiz();
+$("quizMenuBtn").onclick=goHome;
+$("quizHomeBtn").onclick=()=>{quiz.active=false;clearInterval(quizTimerInt);goHome()};
+$("matchAgainBtn").onclick=()=>newMatch(match.mode);
+$("matchMenuBtn").onclick=goHome;
+$("matchHomeBtn").onclick=()=>{match.active=false;goHome()};
+$("hintBtn").onclick=useHint;
+</script>
+</body>
+</html>
