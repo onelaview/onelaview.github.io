@@ -19,13 +19,18 @@
     .grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 240px));
       gap: 20px; width: 100%; max-width: 760px; justify-content: center; }
     a.card {
-      background: #fff; border-radius: 24px; padding: 28px 18px; text-decoration: none;
+      position: relative; background: #fff; border-radius: 24px; padding: 28px 18px; text-decoration: none;
       color: #2b2140; text-align: center; box-shadow: 0 8px 0 rgba(0,0,0,.12);
       transition: transform .1s, box-shadow .1s; display: flex; flex-direction: column;
       align-items: center; gap: 10px; border: 4px solid #fff;
     }
     a.card:active { transform: translateY(6px); box-shadow: 0 2px 0 rgba(0,0,0,.12); }
-    .emoji { font-size: 64px; line-height: 1; }
+    .badge {
+      position: absolute; top: 10px; left: 10px; color: #fff; font-weight: 800;
+      font-size: 11px; line-height: 1; padding: 5px 10px; border-radius: 999px;
+      box-shadow: 0 2px 0 rgba(0,0,0,.18);
+    }
+    .emoji { font-size: 64px; line-height: 1; margin-top: 8px; }
     .name { font-size: clamp(18px, 4vw, 24px); font-weight: bold; }
     .tag { font-size: 13px; color: #78909c; }
     footer { margin-top: 40px; color: #fff; opacity: .85; font-size: 13px; text-align: center; }
@@ -40,23 +45,34 @@
   <footer>Made with ❤️ &middot; bcc185-global</footer>
 
   <script>
+    // Subject badge colors — keep new subjects here in sync with any project below that uses them.
+    const subjectColors = {
+      English: "#4f8cff",
+      Math: "#ff8c42",
+      Science: "#2a9d5c",
+      Thai: "#ff6f91",
+      Chinese: "#e6483c",
+      "Social Studies": "#a9752f",
+    };
     // Add a project here to make it show up on the home page.
     const projects = [
-      { emoji: "🎨", name: "Color & Count Quest", tag: "Colors, numbers, words & sentences", href: "color-count-quest/" },
-      { emoji: "➕", name: "Touch Math", tag: "Plus & minus to 20, beat the clock", href: "touch-game-math/" },
-      { emoji: "🌱", name: "Nature Line-Up", tag: "Match plant & animal parts in Thai and English", href: "nature-line-match/" },
-      { emoji: "🔤", name: "ไตรยางศ์ Tone Sort", tag: "Sort all 44 Thai consonants into high, mid & low", href: "thai-tone-sort/" },
-      { emoji: "🏮", name: "汉字小达人 Chinese Word Quest", tag: "Pinyin & Thai meaning → pick the right hanzi", href: "chinese-word-quest/" },
-      { emoji: "📝", name: "汉语总复习 Chinese Review", tag: "Lessons 5-8 exam prep: family, greetings, body parts & colors", href: "chinese-review/" },
-      { emoji: "🧺", name: "แยกให้ถูก! Sort It Right", tag: "Sort goods, jobs & everyday items — Grade 1 social studies", href: "sort-it-right/" },
-      { emoji: "🧩", name: "จับคู่ทรัพยากร Resource Match", tag: "Match natural resources to what they become", href: "resource-match/" },
-      { emoji: "🍉", name: "ตะลุยป่าล่าสระ Jungle Vowel", tag: "Tap the fruits whose word uses your chosen Thai vowel", href: "thai-vowel-jungle/" },
+      { emoji: "🎨", name: "Color & Count Quest", tag: "Colors, numbers, words & sentences", href: "color-count-quest/", subject: "English" },
+      { emoji: "➕", name: "Touch Math", tag: "Plus & minus to 20, beat the clock", href: "touch-game-math/", subject: "Math" },
+      { emoji: "🌱", name: "Nature Line-Up", tag: "Match plant & animal parts in Thai and English", href: "nature-line-match/", subject: "Science" },
+      { emoji: "🔤", name: "ไตรยางศ์ Tone Sort", tag: "Sort all 44 Thai consonants into high, mid & low", href: "thai-tone-sort/", subject: "Thai" },
+      { emoji: "🏮", name: "汉字小达人 Chinese Word Quest", tag: "Pinyin & Thai meaning → pick the right hanzi", href: "chinese-word-quest/", subject: "Chinese" },
+      { emoji: "📝", name: "汉语总复习 Chinese Review", tag: "Lessons 5-8 exam prep: family, greetings, body parts & colors", href: "chinese-review/", subject: "Chinese" },
+      { emoji: "🧺", name: "แยกให้ถูก! Sort It Right", tag: "Sort goods, jobs & everyday items — Grade 1 social studies", href: "sort-it-right/", subject: "Social Studies" },
+      { emoji: "🧩", name: "จับคู่ทรัพยากร Resource Match", tag: "Match natural resources to what they become", href: "resource-match/", subject: "Social Studies" },
+      { emoji: "🍉", name: "ตะลุยป่าล่าสระ Jungle Vowel", tag: "Tap the fruits whose word uses your chosen Thai vowel", href: "thai-vowel-jungle/", subject: "Thai" },
     ];
     const grid = document.getElementById("grid");
     for (const p of projects) {
       const a = document.createElement("a");
       a.className = "card"; a.href = p.href;
-      a.innerHTML = `<span class="emoji">${p.emoji}</span>
+      const badgeColor = subjectColors[p.subject] || "#78909c";
+      a.innerHTML = `<span class="badge" style="background:${badgeColor}">${p.subject}</span>
+        <span class="emoji">${p.emoji}</span>
         <span class="name">${p.name}</span><span class="tag">${p.tag}</span>`;
       grid.appendChild(a);
     }
